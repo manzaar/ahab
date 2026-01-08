@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Me Ahab</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { Calendar, CheckCircle2, Circle, ShoppingCart, Dumbbell, Plus, Trash2, Flame } = lucide;
+
+    const AhabApp = () => {
+      const [currentView, setCurrentView] = useState('home');
+      const [weekData, setWeekData] = useState({});
+      const [currentWeight, setCurrentWeight] = useState('233');
+      const [groceryChecked, setGroceryChecked] = useState({});
+      const [workoutLog, setWorkoutLog] = useState({});
+      const [selectedWorkout, setSelectedWorkout] = useState('push');
+      
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      
+      const animeQuotes = [
+        { quote: "I am the hope of the universe. I am the answer to all living things that cry out for peace!", char: "Goku" },
+        { quote: "Give up on your dreams and die.", char: "Levi Ackerman" },
+        { quote: "If you don't take risks, you can't create a future.", char: "Monkey D. Luffy" },
+        { quote: "Push through the pain. Giving up hurts more.", char: "Vegeta" },
+        { quote: "The only thing we're allowed to do is believe that we won't regret the choice we made.", char: "Levi" }
+      ];
+      
+      const getTodayString = () => {
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return dayNames[new Date().getDay()];
+      };
+
+      const randomQuote = animeQuotes[Math.floor(Math.random() * animeQuotes.length)];
+
+      const meals = [
+        { id: 'meal1', name: 'Breakfast', calories: 700, items: ['Eggs: 4 whole cooked', 'Oatmeal: 200g', 'Banana: 1', 'Berries: 100g'], macros: '42g pro, 70g carb, 28g fat' },
+        { id: 'meal2', name: 'Lunch', calories: 700, items: ['Chicken: 200g', 'Rice: 200g', 'Broccoli: 150g', 'Olive oil: 1 tbsp'], macros: '62g pro, 55g carb, 16g fat' },
+        { id: 'meal3', name: 'Dinner', calories: 700, items: ['Beef: 200g', 'Sweet potato: 300g', 'Vegetables: 200g', 'Yogurt: 200g'], macros: '96g pro, 55g carb, 16g fat' }
+      ];
+
+      const groceryBulk = ['Oats: Large container', 'Rice: 5-10 lb bag', 'Sweet potatoes: 10 lb bag', 'Olive oil', 'Seasonings'];
+      const groceryWeekly = ['Eggs: 2 dozen', 'Chicken: 3 lbs', 'Beef: 3 lbs', 'Bananas: 7-8', 'Berries: 700g', 'Broccoli: 2 lbs', 'Vegetables: 3 lbs', 'Yogurt: 1400g'];
+
+      const workouts = {
+        push: { name: 'Push', exercises: ['Shoulder Press', 'Incline Bench', 'Lateral Raises', 'Dips'] },
+        pull: { name: 'Pull', exercises: ['Pull-ups', 'Rows', 'Face Pulls', 'Curls'] },
+        legs: { name: 'Legs', exercises: ['Squats', 'RDLs', 'Leg Press', 'Leg Curls'] }
+      };
+
+      useEffect(() => {
+        const saved = localStorage.getItem('weekData');
+        if (saved) setWeekData(JSON.parse(saved));
+        else {
+          const init = {};
+          days.forEach(d => { init[d] = { meal1: false, meal2: false, meal3: false, training: false, weight: '', water: 0 }; });
+          setWeekData(init);
+        }
+        const w = localStorage.getItem('currentWeight');
+        if (w) setCurrentWeight(w);
+        const g = localStorage.getItem('grocery');
+        if (g) setGroceryChecked(JSON.parse(g));
+        const wl = localStorage.getItem('workouts');
+        if (wl) setWorkoutLog(JSON.parse(wl));
+      }, []);
+
+      const toggleMeal = (day, meal) => {
+        const newData = { ...weekData, [day]: { ...weekData[day], [meal]: !weekData[day][meal] } };
+        setWeekData(newData);
+        localStorage.setItem('weekData', JSON.stringify(newData));
+      };
+
+      const updateWeight = (day, wt) => {
+        const newData = { ...weekData, [day]: { ...weekData[day], weight: wt } };
+        setWeekData(newData);
+        localStorage.setItem('weekData', JSON.stringify(newData));
+        if (wt) { setCurrentWeight(wt); localStorage.setItem('currentWeight', wt); }
+      };
+
+      const updateWater = (day, amt) => {
+        const newData = { ...weekData, [day]: { ...weekData[day], water: amt } };
+        setWeekData(newData);
+        localStorage.setItem('weekData', JSON.stringify(newData));
+      };
+
+      const toggleGrocery = (item) => {
+        const newChecked = { ...groceryChecked, [item]: !groceryChecked[item] };
+        setGroceryChecked(newChecked);
+        localStorage.setItem('grocery', JSON.stringify(newChecked));
+      };
+
+      const today = getTodayString();
+      const todayData = weekData[today] || {};
+      const progress = ((233 - parseFloat(currentWeight)) / 43) * 100;
+
+      return (
+        <div className="min-h-screen bg-black text-white p-4 pb-24">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 border-b-2 border-red-900 pb-4">
+              <h1 className="text-3xl font-black tracking-wider">CALL ME AHAB...</h1>
+              <p className="text-red-400 font-bold">CURRENT: {currentWeight} LBS → TARGET: 190 LBS</p>
+              <div className="mt-3 bg-gradient-to-r from-red-950/50 to-black border-l-4 border-red-600 p-3 rounded">
+                <p className="text-sm italic text-red-300">{randomQuote.quote}</p>
+                <p className="text-xs text-red-500 font-black mt-1 text-right">- {randomQuote.char}</p>
+              </div>
+            </div>
+
+            <div className="bg-black border-2 border-red-900 rounded p-6 mb-6">
+              <div className="w-full bg-red-950 border border-red-900 rounded-full h-3 mb-2">
+                <div className="bg-gradient-to-r from-red-700 to-red-500 h-3 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }} />
+              </div>
+              <p className="text-sm text-red-300 text-center font-bold">{progress.toFixed(1)}% CONQUERED</p>
+            </div>
+
+            <div className="flex gap-2 mb-6 overflow-x-auto">
+              {['home', 'meals', 'workouts', 'grocery'].map(v => (
+                <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded font-black uppercase border-2 ${currentView === v ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{v}</button>
+              ))}
+            </div>
+
+            {currentView === 'home' && (
+              <div className="bg-black border-2 border-red-900 rounded p-4">
+                <h2 className="text-2xl font-black mb-4 uppercase">TODAY - {today}</h2>
+                <div className="mb-4">
+                  <input type="number" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="w-24 bg-red-950 border-2 border-red-800 rounded px-3 py-2 font-black text-red-300" />
+                </div>
+                <div className="mb-4 flex gap-1">
+                  {[1,2,3,4,5,6,7,8].map(n => (
+                    <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`w-9 h-9 rounded-full text-sm font-black border-2 ${(todayData.water || 0) >= n ? 'bg-blue-700 border-blue-500' : 'bg-black text-red-800 border-red-900'}`}>{n}</button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {['meal1', 'meal2', 'meal3'].map(m => (
+                    <button key={m} onClick={() => toggleMeal(today, m)} className={`flex flex-col items-center p-4 rounded border-2 ${todayData[m] ? 'bg-red-800 border-red-600' : 'bg-black text-red-400 border-red-900'}`}>
+                      <span className="font-black uppercase">{m.replace('meal', 'M')}</span>
+                    </button>
+                  ))}
+                  <button onClick={() => toggleMeal(today, 'training')} className={`flex flex-col items-center p-4 rounded border-2 ${todayData.training ? 'bg-red-800 border-red-600' : 'bg-black text-red-400 border-red-900'}`}>
+                    <span className="font-black uppercase">TRAIN</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {currentView === 'meals' && (
+              <div className="space-y-4">
+                {meals.map(m => (
+                  <div key={m.id} className="bg-black border-2 border-red-900 rounded p-4">
+                    <div className="flex justify-between mb-3 pb-2 border-b-2 border-red-900">
+                      <h3 className="text-xl font-black uppercase">{m.name}</h3>
+                      <span className="text-red-500 font-black">{m.calories}</span>
+                    </div>
+                    <ul className="space-y-2 mb-3">
+                      {m.items.map((it, i) => <li key={i} className="text-red-300">{it}</li>)}
+                    </ul>
+                    <p className="text-sm text-red-400 font-bold">{m.macros}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {currentView === 'grocery' && (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-orange-900/30 to-black border-2 border-orange-700 rounded p-4">
+                  <h2 className="text-xl font-black text-orange-400 uppercase mb-3">BULK SUPPLY</h2>
+                  <div className="space-y-2">
+                    {groceryBulk.map(it => (
+                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex gap-3 p-3 rounded border-2 ${groceryChecked[it] ? 'bg-orange-800 border-orange-600' : 'bg-black text-orange-300 border-orange-900'}`}>
+                        <span className={`font-bold ${groceryChecked[it] ? 'line-through' : ''}`}>{it}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">WEEKLY FRESH</h2>
+                  <div className="space-y-2">
+                    {groceryWeekly.map(it => (
+                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex gap-3 p-3 rounded border-2 ${groceryChecked[it] ? 'bg-red-800 border-red-600' : 'bg-black text-red-300 border-red-900'}`}>
+                        <span className={`font-bold ${groceryChecked[it] ? 'line-through' : ''}`}>{it}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<AhabApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>
