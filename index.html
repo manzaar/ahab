@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Call Me Ahab</title>
+  <style>
+    @keyframes yumPop {
+      0% { opacity: 0; transform: scale(0.5); }
+      20% { opacity: 1; transform: scale(1.2); }
+      40% { transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.5) translateY(-50px); }
+    }
+  </style>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -55,6 +63,12 @@
       const [timerSeconds, setTimerSeconds] = useState(90);
       const [timerRunning, setTimerRunning] = useState(false);
       const [timerMode, setTimerMode] = useState('rest');
+      const [showYum, setShowYum] = useState(false);
+
+      const triggerYum = () => {
+        setShowYum(true);
+        setTimeout(() => setShowYum(false), 1000);
+      };
 
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       
@@ -434,19 +448,89 @@
             )}
 
             {currentView === 'meals' && (
-              <div className="space-y-4">
-                {meals.map(m => (
-                  <div key={m.id} className="bg-black border-2 border-red-900 rounded p-4">
-                    <div className="flex justify-between mb-3 pb-2 border-b-2 border-red-900">
-                      <h3 className="text-xl font-black uppercase">{m.name}</h3>
-                      <span className="text-red-500 font-black">{m.calories}</span>
+              <div className="space-y-4 relative">
+                {/* YUM Popup */}
+                {showYum && (
+                  <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+                    <div className="text-6xl font-black text-green-400 animate-pulse" style={{animation: 'yumPop 1s ease-out forwards'}}>
+                      YUM! 🔥
+                    </div>
+                  </div>
+                )}
+
+                {/* Daily Summary */}
+                <div className="bg-gradient-to-r from-red-950 to-black border-2 border-red-700 rounded p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-red-500 font-bold">TODAY'S FUEL</p>
+                      <p className="text-2xl font-black">{todayData.meal1 && todayData.meal2 && todayData.meal3 ? '2100' : todayData.meal1 && todayData.meal2 ? '1400' : todayData.meal1 || todayData.meal2 || todayData.meal3 ? '700' : '0'} <span className="text-red-500 text-lg">/ 2100 cals</span></p>
+                    </div>
+                    <div className="flex gap-1">
+                      {['meal1', 'meal2', 'meal3'].map(m => (
+                        <div key={m} className={`w-4 h-4 rounded-full ${todayData[m] ? 'bg-green-500' : 'bg-red-900'}`}></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meal Timing Guide */}
+                <div className="bg-black border-2 border-red-900 rounded p-3">
+                  <p className="text-xs text-red-500 font-bold mb-2">OPTIMAL TIMING</p>
+                  <div className="flex justify-between text-xs text-red-400">
+                    <span>🌅 Breakfast: 7-9am</span>
+                    <span>☀️ Lunch: 12-2pm</span>
+                    <span>🌙 Dinner: 6-8pm</span>
+                  </div>
+                </div>
+
+                {meals.map((m, idx) => (
+                  <div key={m.id} className={`bg-black border-2 rounded p-4 transition-all ${todayData[m.id] ? 'border-green-700 bg-green-950/20' : 'border-red-900'}`}>
+                    <div className="flex justify-between items-center mb-3 pb-2 border-b-2 border-red-900">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => { toggleMeal(today, m.id); if (!todayData[m.id]) triggerYum(); }}
+                          className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center font-black transition-all ${todayData[m.id] ? 'bg-green-600 border-green-400 text-white' : 'bg-black border-red-700 text-red-700'}`}
+                        >
+                          {todayData[m.id] ? '✓' : ''}
+                        </button>
+                        <h3 className="text-xl font-black uppercase">{m.name}</h3>
+                      </div>
+                      <span className="text-red-500 font-black text-lg">{m.calories} <span className="text-sm text-red-600">cals</span></span>
                     </div>
                     <ul className="space-y-2 mb-3">
-                      {m.items.map((it, i) => <li key={i} className="text-red-300">{it}</li>)}
+                      {m.items.map((it, i) => <li key={i} className="text-red-300 flex items-center gap-2"><span className="text-red-600">•</span> {it}</li>)}
                     </ul>
-                    <p className="text-sm text-red-400 font-bold">{m.macros}</p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-red-400 font-bold">{m.macros}</p>
+                      <span className="text-xs text-red-600">{idx === 0 ? 'PRE-WORKOUT FUEL' : idx === 1 ? 'RECOVERY MEAL' : 'MUSCLE BUILDER'}</span>
+                    </div>
                   </div>
                 ))}
+
+                {/* Macros Summary */}
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <p className="text-sm font-black text-red-500 uppercase mb-3">DAILY MACRO TOTALS</p>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="bg-red-950/50 rounded p-2">
+                      <p className="text-xl font-black text-red-400">200g</p>
+                      <p className="text-xs text-red-600">PROTEIN</p>
+                    </div>
+                    <div className="bg-red-950/50 rounded p-2">
+                      <p className="text-xl font-black text-red-400">180g</p>
+                      <p className="text-xs text-red-600">CARBS</p>
+                    </div>
+                    <div className="bg-red-950/50 rounded p-2">
+                      <p className="text-xl font-black text-red-400">60g</p>
+                      <p className="text-xs text-red-600">FAT</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pro Tip */}
+                <div className="bg-gradient-to-r from-orange-950/50 to-black border-l-4 border-orange-600 p-3 rounded">
+                  <p className="text-orange-400 font-bold text-sm">💡 PRO TIP</p>
+                  <p className="text-orange-300 text-xs mt-1">Eat protein within 30 min of training for optimal muscle recovery. Space meals 4-5 hours apart.</p>
+                </div>
               </div>
             )}
 
