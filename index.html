@@ -54,6 +54,16 @@
       const [timerRunning, setTimerRunning] = useState(false);
       const [timerMode, setTimerMode] = useState('rest');
       const [showYum, setShowYum] = useState(false);
+      const [showLogged, setShowLogged] = useState(false);
+
+      const logProgress = () => {
+        localStorage.setItem('weekData', JSON.stringify(weekData));
+        localStorage.setItem('currentWeight', currentWeight);
+        localStorage.setItem('grocery', JSON.stringify(groceryChecked));
+        localStorage.setItem('workouts', JSON.stringify(workoutLog));
+        setShowLogged(true);
+        setTimeout(() => setShowLogged(false), 1500);
+      };
 
       const defaultVideos = [
         { id: 'eC7xzavzEKY', title: 'Why Life Seems to Speed Up as We Age', category: 'philosophy' },
@@ -92,7 +102,40 @@
         { quote: "Fear is not evil. It tells you what your weakness is.", char: "Gildarts" },
         { quote: "Being weak is nothing to be ashamed of. Staying weak is.", char: "Fuegoleon" },
         { quote: "A real man never dies, even when he's killed!", char: "Kamina" },
-        { quote: "Power comes in response to a need, not a desire.", char: "Goku" }
+        { quote: "Power comes in response to a need, not a desire.", char: "Goku" },
+        { quote: "It's not about whether I can. I have to do it.", char: "Mikasa Ackerman" },
+        { quote: "The ticket to the future is always open.", char: "Vash the Stampede" },
+        { quote: "I'll leave tomorrow's problems to tomorrow's me.", char: "Saitama" },
+        { quote: "If you don't like your destiny, don't accept it.", char: "Naruto Uzumaki" },
+        { quote: "A person grows when they are able to overcome hardships.", char: "Reigen Arataka" },
+        { quote: "When you lose, you die. When you win, you live.", char: "Eren Yeager" },
+        { quote: "The moment you think of giving up, remember why you held on for so long.", char: "Natsu Dragneel" },
+        { quote: "I don't want to conquer anything. I just think that the guy with the most freedom is the Pirate King.", char: "Luffy" },
+        { quote: "Whatever you lose, you'll find it again. But what you throw away you'll never get back.", char: "Kenshin Himura" },
+        { quote: "Stand up and walk. Keep moving forward.", char: "Edward Elric" },
+        { quote: "There's no shame in falling down. True shame is not standing up again.", char: "Shintaro Midorima" },
+        { quote: "Life is not a game of luck. If you wanna win, work hard.", char: "Sora" },
+        { quote: "You should never give up on life, no matter how you feel.", char: "Canaan" },
+        { quote: "Even if we forget the faces of our friends, we'll never forget the bonds.", char: "Otonashi" },
+        { quote: "Don't beg for things. Do it yourself, or else you won't get anything.", char: "Renton Thurston" },
+        { quote: "No one knows what the future holds. That's why its potential is infinite.", char: "Okabe Rintaro" },
+        { quote: "Vision without action is a daydream. Action without vision is a nightmare.", char: "Japanese Proverb" },
+        { quote: "People's lives don't end when they die. It ends when they lose faith.", char: "Itachi Uchiha" },
+        { quote: "Those who stand at the top determine what's wrong and what's right.", char: "Sosuke Aizen" },
+        { quote: "An excellent leader must be passionate because it's their duty to keep everyone moving forward.", char: "Nico Robin" },
+        { quote: "To know sorrow is not terrifying. What is terrifying is to know you can't go back.", char: "Matsumoto Rangiku" },
+        { quote: "Every journey begins with a single step.", char: "Monkey D. Dragon" },
+        { quote: "The only ones who should kill are those who are prepared to be killed.", char: "Lelouch vi Britannia" },
+        { quote: "If I can meet you again, against the 6 billion to 1 odds, even if you can't move, I'll marry you.", char: "Hideki" },
+        { quote: "I refuse to let my fear control me anymore.", char: "Maka Albarn" },
+        { quote: "I want to be strong. I don't want to lose anymore.", char: "Ichigo Kurosaki" },
+        { quote: "If you can't find a reason to fight, then you shouldn't be fighting.", char: "Akame" },
+        { quote: "Revenge is just the path you took to escape your suffering.", char: "Ichigo Kurosaki" },
+        { quote: "In our society, letting others find out that you're a nice person is a very risky move.", char: "Hitagi Senjougahara" },
+        { quote: "Life comes at a cost. Wouldn't it be arrogant to die before you've repaid that debt?", char: "Yuuko Ichihara" },
+        { quote: "The circumstances of one's birth are irrelevant. It is what you do with the gift of life that determines who you are.", char: "Mewtwo" },
+        { quote: "We don't have to know what tomorrow holds! That's why we can live for everything we're worth today!", char: "Natsu Dragneel" },
+        { quote: "Forgetting is like a wound. The wound may heal, but it has already left a scar.", char: "Monkey D. Luffy" }
       ];
 
       const currentQuote = animeQuotes[quoteIndex];
@@ -285,16 +328,16 @@
               </div>
             </Card>
 
-            {/* Quote */}
-            <div className={`mb-5 px-4 py-3 bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-red-600 rounded-r-xl transition-opacity duration-500 ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
-              <p className="text-red-300 text-sm italic">"{currentQuote.quote}"</p>
+            {/* Quote - Fixed Height */}
+            <div className={`mb-5 px-4 py-3 bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-red-600 rounded-r-xl transition-opacity duration-500 min-h-[80px] flex flex-col justify-center ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
+              <p className="text-red-300 text-sm italic line-clamp-2">"{currentQuote.quote}"</p>
               <p className="text-red-500 text-xs font-bold mt-1">— {currentQuote.char}</p>
             </div>
 
-            {/* Navigation */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {/* Navigation - Main Buttons (Pill style with gradient) */}
+            <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
               {['home', 'meals', 'workouts', 'grocery'].map(v => (
-                <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded-xl text-sm font-bold uppercase whitespace-nowrap transition-all duration-300 ${currentView === v ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'bg-neutral-900 text-red-400 border border-red-900/30 hover:bg-neutral-800'}`}>
+                <button key={v} onClick={() => setCurrentView(v)} className={`flex-1 px-5 py-3 rounded-full text-sm font-black uppercase whitespace-nowrap transition-all duration-300 ${currentView === v ? 'bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white shadow-lg shadow-red-600/40 scale-105' : 'bg-gradient-to-br from-neutral-800 to-neutral-900 text-red-400 border-2 border-red-800/50 hover:border-red-600/70 hover:from-neutral-700'}`}>
                   {v}
                 </button>
               ))}
@@ -489,9 +532,10 @@
             {/* WORKOUTS */}
             {currentView === 'workouts' && (
               <div className="space-y-4 animate-fade-in">
-                <div className="flex gap-2 mb-2">
+                {/* Sub-navigation: Push/Pull/Legs (Angular style) */}
+                <div className="flex gap-1 mb-2 bg-neutral-900/50 p-1 rounded-lg">
                   {Object.keys(workouts).map(w => (
-                    <button key={w} onClick={() => setSelectedWorkout(w)} className={`flex-1 py-2 rounded-xl text-sm font-bold uppercase transition-all duration-300 ${selectedWorkout === w ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'bg-neutral-900 text-red-400 border border-red-900/30'}`}>{workouts[w].name}</button>
+                    <button key={w} onClick={() => setSelectedWorkout(w)} className={`flex-1 py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all duration-200 ${selectedWorkout === w ? 'bg-red-700 text-white' : 'text-red-500/70 hover:text-red-400 hover:bg-neutral-800/50'}`}>{workouts[w].name}</button>
                   ))}
                 </div>
                 <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="w-full bg-neutral-900 border border-red-900/30 rounded-xl px-4 py-2 text-red-400 font-bold focus:outline-none focus:border-red-600" />
@@ -564,6 +608,53 @@
               </div>
             )}
 
+          </div>
+
+          {/* Logged Confirmation Popup */}
+          {showLogged && (
+            <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
+              <div className="text-4xl font-black text-green-400" style={{animation: 'yumPop 1.5s ease-out forwards'}}>LOGGED! ✓</div>
+            </div>
+          )}
+
+          {/* Floating Daily Progress Bar */}
+          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4 z-40">
+            <div className="max-w-lg mx-auto">
+              <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-3 border border-red-900/30 shadow-lg shadow-black/50">
+                <div className="flex items-center justify-between gap-2">
+                  {/* Meals */}
+                  <div className="flex gap-1">
+                    {['meal1', 'meal2', 'meal3'].map((m, i) => (
+                      <div key={m} className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData[m] ? 'bg-red-600 text-white' : 'bg-neutral-800 text-red-900 border border-red-900/30'}`}>
+                        {todayData[m] ? '✓' : i + 1}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Gym */}
+                  <div className={`w-7 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-800 text-orange-900 border border-orange-900/30'}`}>
+                    {todayData.training ? '✓' : 'G'}
+                  </div>
+
+                  {/* Water mini-display */}
+                  <div className="flex gap-0.5 items-center">
+                    {[1,2,3,4,5,6,7,8].map(n => (
+                      <div key={n} className={`w-1.5 h-3 rounded-sm transition-all ${(todayData.water || 0) >= n ? 'bg-blue-500' : 'bg-neutral-800'}`}></div>
+                    ))}
+                  </div>
+
+                  {/* Daily % */}
+                  <span className="text-sm font-black text-red-400 min-w-[40px] text-center">
+                    {Math.round((((todayData.meal1 ? 1 : 0) + (todayData.meal2 ? 1 : 0) + (todayData.meal3 ? 1 : 0) + (todayData.training ? 1 : 0)) / 4) * 100)}%
+                  </span>
+
+                  {/* Log It Button */}
+                  <button onClick={logProgress} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
+                    LOG IT
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       );
