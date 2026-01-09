@@ -3,26 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Call Me Ahab</title>
+  <title>Ahab - Your Fitness Journey</title>
   <style>
     @keyframes yumPop {
       0% { opacity: 0; transform: scale(0.5); }
-      20% { opacity: 1; transform: scale(1.2); }
+      20% { opacity: 1; transform: scale(1.1); }
       40% { transform: scale(1); }
-      100% { opacity: 0; transform: scale(1.5) translateY(-50px); }
+      100% { opacity: 0; transform: scale(1.2) translateY(-30px); }
     }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); }
   </style>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            dark: { 50: '#f8fafc', 100: '#1e293b', 200: '#1a2332', 300: '#151c28', 400: '#0f1419', 500: '#0a0e13' },
+            accent: { light: '#6ee7b7', DEFAULT: '#10b981', dark: '#059669' }
+          }
+        }
+      }
+    }
+  </script>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useEffect } = React;
-    const { Calendar, CheckCircle2, Circle, ShoppingCart, Dumbbell, Plus, Trash2, Flame } = lucide;
 
     const AhabApp = () => {
       const [currentView, setCurrentView] = useState('home');
@@ -34,29 +54,7 @@
       const [quoteIndex, setQuoteIndex] = useState(0);
       const [quoteFade, setQuoteFade] = useState(true);
       const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
-      const defaultVideos = [
-        // Philosophy
-        { id: 'eC7xzavzEKY', title: 'Why Life Seems to Speed Up as We Age', category: 'philosophy' },
-        { id: 'WPPPFqsECz0', title: 'The philosophy of Stoicism', category: 'philosophy' },
-        { id: 'w8-k_EJW5bY', title: 'Why Socrates Hated Democracy', category: 'philosophy' },
-        { id: '5sD_2jNl5b4', title: 'The Absurd Philosophy of Albert Camus', category: 'philosophy' },
-        { id: 'D7CH9cRN8Rg', title: 'What Is Existentialism?', category: 'philosophy' },
-        // Psychology
-        { id: 'rE3j_RHkqJc', title: 'The Psychology of Self-Deception', category: 'psychology' },
-        { id: 'wfYbgdo8e-8', title: 'Carl Jung - How to Realize Your True Potential', category: 'psychology' },
-        { id: 'n3Xv_g3g-mA', title: 'Dopamine Detox: Why You Should Do It', category: 'psychology' },
-        { id: 'vvivmV4SRRI', title: 'The Psychology of Motivation', category: 'psychology' },
-        { id: 'LO1mTELoj6o', title: 'Why You Procrastinate Even When It Feels Bad', category: 'psychology' },
-        // History
-        { id: 'EbBHk_zLTmY', title: 'History of the Entire World', category: 'history' },
-        { id: 'xuCn8ux2gbs', title: 'History of Japan', category: 'history' },
-        { id: '9BugznGj6bU', title: 'The Fall of Rome Explained', category: 'history' },
-        { id: 'HhMh4kLsy-E', title: 'The History of Alexander the Great', category: 'history' },
-        { id: 'vo4pMVb0R6M', title: 'The Inca Empire Explained', category: 'history' },
-        { id: 'EY6q5dv_B-o', title: 'Genghis Khan - Rise of the Mongol Empire', category: 'history' },
-      ];
-
-      const [videos, setVideos] = useState(defaultVideos);
+      const [videos, setVideos] = useState([]);
       const [newVideoUrl, setNewVideoUrl] = useState('');
       const [activeVideo, setActiveVideo] = useState(null);
       const [videoCategory, setVideoCategory] = useState('all');
@@ -65,65 +63,67 @@
       const [timerMode, setTimerMode] = useState('rest');
       const [showYum, setShowYum] = useState(false);
 
-      const triggerYum = () => {
-        setShowYum(true);
-        setTimeout(() => setShowYum(false), 1000);
-      };
+      const defaultVideos = [
+        { id: 'eC7xzavzEKY', title: 'Why Life Seems to Speed Up as We Age', category: 'philosophy' },
+        { id: 'WPPPFqsECz0', title: 'The philosophy of Stoicism', category: 'philosophy' },
+        { id: 'w8-k_EJW5bY', title: 'Why Socrates Hated Democracy', category: 'philosophy' },
+        { id: '5sD_2jNl5b4', title: 'The Absurd Philosophy of Albert Camus', category: 'philosophy' },
+        { id: 'D7CH9cRN8Rg', title: 'What Is Existentialism?', category: 'philosophy' },
+        { id: 'rE3j_RHkqJc', title: 'The Psychology of Self-Deception', category: 'psychology' },
+        { id: 'wfYbgdo8e-8', title: 'Carl Jung - How to Realize Your True Potential', category: 'psychology' },
+        { id: 'n3Xv_g3g-mA', title: 'Dopamine Detox: Why You Should Do It', category: 'psychology' },
+        { id: 'LO1mTELoj6o', title: 'Why You Procrastinate Even When It Feels Bad', category: 'psychology' },
+        { id: 'EbBHk_zLTmY', title: 'History of the Entire World', category: 'history' },
+        { id: 'xuCn8ux2gbs', title: 'History of Japan', category: 'history' },
+        { id: '9BugznGj6bU', title: 'The Fall of Rome Explained', category: 'history' },
+        { id: 'EY6q5dv_B-o', title: 'Genghis Khan - Rise of the Mongol Empire', category: 'history' },
+      ];
+
+      const triggerYum = () => { setShowYum(true); setTimeout(() => setShowYum(false), 1000); };
 
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      
-      const animeQuotes = [
-        { quote: "I am the hope of the universe. I am the answer to all living things that cry out for peace!", char: "Goku" },
-        { quote: "Give up on your dreams and die.", char: "Levi Ackerman" },
-        { quote: "If you don't take risks, you can't create a future.", char: "Monkey D. Luffy" },
-        { quote: "Push through the pain. Giving up hurts more.", char: "Vegeta" },
-        { quote: "The only thing we're allowed to do is believe that we won't regret the choice we made.", char: "Levi" },
+
+      const quotes = [
+        { quote: "The only way to do great work is to love what you do.", char: "Steve Jobs" },
+        { quote: "Success is not final, failure is not fatal.", char: "Winston Churchill" },
+        { quote: "The body achieves what the mind believes.", char: "Napoleon Hill" },
+        { quote: "Push through the pain. Giving up hurts more.", char: "Anonymous" },
+        { quote: "Strength does not come from physical capacity. It comes from an indomitable will.", char: "Gandhi" },
         { quote: "A lesson without pain is meaningless.", char: "Edward Elric" },
-        { quote: "Hardships make us stronger.", char: "Natsu Dragneel" },
-        { quote: "I'll take a potato chip... and eat it!", char: "Light Yagami" },
+        { quote: "The only person you are destined to become is the person you decide to be.", char: "Emerson" },
         { quote: "Believe in the me that believes in you!", char: "Kamina" },
-        { quote: "The moment you give up is the moment you let someone else win.", char: "Kino" },
-        { quote: "Strength is the only thing that matters in this world.", char: "Baki Hanma" },
+        { quote: "Your body can stand almost anything. It's your mind you have to convince.", char: "Unknown" },
         { quote: "A dropout will beat a genius through hard work.", char: "Rock Lee" },
         { quote: "Surpass your limits. Right here, right now.", char: "Yami Sukehiro" },
-        { quote: "If you can't do something, then don't. Focus on what you can.", char: "Shiroe" },
         { quote: "The world isn't perfect. But it's there for us, doing the best it can.", char: "Roy Mustang" },
-        { quote: "I don't want to conquer anything. I just think the guy with the most freedom is the Pirate King.", char: "Monkey D. Luffy" },
-        { quote: "Fear is not evil. It tells you what your weakness is.", char: "Gildarts" },
-        { quote: "Being weak is nothing to be ashamed of. Staying weak is.", char: "Fuegoleon" },
-        { quote: "A real man never dies, even when he's killed!", char: "Kamina" },
-        { quote: "Power comes in response to a need, not a desire.", char: "Goku" }
       ];
-      
+
+      const currentQuote = quotes[quoteIndex];
+
       const getTodayString = () => {
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return dayNames[new Date().getDay()];
       };
 
-      const currentQuote = animeQuotes[quoteIndex];
-
       useEffect(() => {
         const cycleQuotes = setInterval(() => {
           setQuoteFade(false);
-          setTimeout(() => {
-            setQuoteIndex(prev => (prev + 1) % animeQuotes.length);
-            setQuoteFade(true);
-          }, 500);
-        }, 5000);
+          setTimeout(() => { setQuoteIndex(prev => (prev + 1) % quotes.length); setQuoteFade(true); }, 500);
+        }, 6000);
         return () => clearInterval(cycleQuotes);
       }, []);
 
       const meals = [
-        { id: 'meal1', name: 'Breakfast', calories: 700, items: ['Eggs: 4 whole cooked', 'Oatmeal: 200g', 'Banana: 1', 'Berries: 100g'], macros: '42g pro, 70g carb, 28g fat' },
-        { id: 'meal2', name: 'Lunch', calories: 700, items: ['Chicken: 200g', 'Rice: 200g', 'Broccoli: 150g', 'Olive oil: 1 tbsp'], macros: '62g pro, 55g carb, 16g fat' },
-        { id: 'meal3', name: 'Dinner', calories: 700, items: ['Beef: 200g', 'Sweet potato: 300g', 'Vegetables: 200g', 'Yogurt: 200g'], macros: '96g pro, 55g carb, 16g fat' }
+        { id: 'meal1', name: 'Breakfast', calories: 700, items: ['4 whole eggs', '200g oatmeal', '1 banana', '100g berries'], macros: '42g protein · 70g carbs · 28g fat' },
+        { id: 'meal2', name: 'Lunch', calories: 700, items: ['200g chicken breast', '200g rice', '150g broccoli', '1 tbsp olive oil'], macros: '62g protein · 55g carbs · 16g fat' },
+        { id: 'meal3', name: 'Dinner', calories: 700, items: ['200g beef', '300g sweet potato', '200g vegetables', '200g yogurt'], macros: '96g protein · 55g carbs · 16g fat' }
       ];
 
-      const groceryBulk = ['Oats: Large container', 'Rice: 5-10 lb bag', 'Sweet potatoes: 10 lb bag', 'Olive oil', 'Seasonings'];
-      const groceryWeekly = ['Eggs: 2 dozen', 'Chicken: 3 lbs', 'Beef: 3 lbs', 'Bananas: 7-8', 'Berries: 700g', 'Broccoli: 2 lbs', 'Vegetables: 3 lbs', 'Yogurt: 1400g'];
+      const groceryBulk = ['Oats (large container)', 'Rice (5-10 lb bag)', 'Sweet potatoes (10 lb)', 'Olive oil', 'Seasonings & spices'];
+      const groceryWeekly = ['Eggs (2 dozen)', 'Chicken breast (3 lbs)', 'Beef (3 lbs)', 'Bananas (7-8)', 'Mixed berries (700g)', 'Broccoli (2 lbs)', 'Mixed vegetables (3 lbs)', 'Greek yogurt (1400g)'];
 
       const workouts = {
-        push: { name: 'Push', exercises: ['Bench Press', 'Shoulder Press', 'Incline Dumbbell Press', 'Lateral Raises', 'Tricep Pushdowns'] },
+        push: { name: 'Push', exercises: ['Bench Press', 'Overhead Press', 'Incline Dumbbell Press', 'Lateral Raises', 'Tricep Pushdowns'] },
         pull: { name: 'Pull', exercises: ['Pull-ups', 'Barbell Rows', 'Face Pulls', 'Bicep Curls', 'Lat Pulldowns'] },
         legs: { name: 'Legs', exercises: ['Squats', 'Romanian Deadlifts', 'Leg Press', 'Leg Curls', 'Calf Raises'] }
       };
@@ -136,44 +136,33 @@
           days.forEach(d => { init[d] = { meal1: false, meal2: false, meal3: false, training: false, weight: '', water: 0 }; });
           setWeekData(init);
         }
-        const w = localStorage.getItem('currentWeight');
-        if (w) setCurrentWeight(w);
-        const g = localStorage.getItem('grocery');
-        if (g) setGroceryChecked(JSON.parse(g));
-        const wl = localStorage.getItem('workouts');
-        if (wl) setWorkoutLog(JSON.parse(wl));
+        const w = localStorage.getItem('currentWeight'); if (w) setCurrentWeight(w);
+        const g = localStorage.getItem('grocery'); if (g) setGroceryChecked(JSON.parse(g));
+        const wl = localStorage.getItem('workouts'); if (wl) setWorkoutLog(JSON.parse(wl));
         const vids = localStorage.getItem('videos');
-        if (vids) {
-          const saved = JSON.parse(vids);
-          const merged = [...defaultVideos];
-          saved.forEach(v => { if (!merged.find(m => m.id === v.id)) merged.push(v); });
-          setVideos(merged);
-        }
+        if (vids) { const saved = JSON.parse(vids); const merged = [...defaultVideos]; saved.forEach(v => { if (!merged.find(m => m.id === v.id)) merged.push(v); }); setVideos(merged); }
+        else setVideos(defaultVideos);
       }, []);
 
       const toggleMeal = (day, meal) => {
         const newData = { ...weekData, [day]: { ...weekData[day], [meal]: !weekData[day][meal] } };
-        setWeekData(newData);
-        localStorage.setItem('weekData', JSON.stringify(newData));
+        setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
       };
 
       const updateWeight = (day, wt) => {
         const newData = { ...weekData, [day]: { ...weekData[day], weight: wt } };
-        setWeekData(newData);
-        localStorage.setItem('weekData', JSON.stringify(newData));
+        setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
         if (wt) { setCurrentWeight(wt); localStorage.setItem('currentWeight', wt); }
       };
 
       const updateWater = (day, amt) => {
         const newData = { ...weekData, [day]: { ...weekData[day], water: amt } };
-        setWeekData(newData);
-        localStorage.setItem('weekData', JSON.stringify(newData));
+        setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
       };
 
       const toggleGrocery = (item) => {
         const newChecked = { ...groceryChecked, [item]: !groceryChecked[item] };
-        setGroceryChecked(newChecked);
-        localStorage.setItem('grocery', JSON.stringify(newChecked));
+        setGroceryChecked(newChecked); localStorage.setItem('grocery', JSON.stringify(newChecked));
       };
 
       const updateExerciseLog = (date, workoutType, exercise, field, value) => {
@@ -182,92 +171,51 @@
         if (!newLog[date][workoutType]) newLog[date][workoutType] = {};
         if (!newLog[date][workoutType][exercise]) newLog[date][workoutType][exercise] = { weight: '', reps: '', sets: '' };
         newLog[date][workoutType][exercise][field] = value;
-        setWorkoutLog(newLog);
-        localStorage.setItem('workouts', JSON.stringify(newLog));
+        setWorkoutLog(newLog); localStorage.setItem('workouts', JSON.stringify(newLog));
       };
 
-      const getExerciseData = (date, workoutType, exercise) => {
-        return workoutLog[date]?.[workoutType]?.[exercise] || { weight: '', reps: '', sets: '' };
-      };
+      const getExerciseData = (date, workoutType, exercise) => workoutLog[date]?.[workoutType]?.[exercise] || { weight: '', reps: '', sets: '' };
 
       const getWorkoutHistory = (workoutType, exercise) => {
         const history = [];
         Object.keys(workoutLog).sort().reverse().forEach(date => {
           if (workoutLog[date]?.[workoutType]?.[exercise]) {
             const data = workoutLog[date][workoutType][exercise];
-            if (data.weight || data.reps || data.sets) {
-              history.push({ date, ...data });
-            }
+            if (data.weight || data.reps || data.sets) history.push({ date, ...data });
           }
         });
         return history.slice(0, 5);
       };
 
-      const getYouTubeId = (url) => {
-        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
-        return match ? match[1] : null;
-      };
-
-      const addVideo = (category = 'custom') => {
-        const videoId = getYouTubeId(newVideoUrl);
-        if (videoId && !videos.find(v => v.id === videoId)) {
-          const newVideos = [...videos, { id: videoId, title: 'Custom Video', category, added: new Date().toISOString() }];
-          setVideos(newVideos);
-          localStorage.setItem('videos', JSON.stringify(newVideos));
-          setNewVideoUrl('');
-        }
-      };
-
       const filteredVideos = videoCategory === 'all' ? videos : videos.filter(v => v.category === videoCategory);
 
-      // Timer effect
       useEffect(() => {
         let interval;
-        if (timerRunning && timerSeconds > 0) {
-          interval = setInterval(() => setTimerSeconds(s => s - 1), 1000);
-        } else if (timerSeconds === 0) {
-          setTimerRunning(false);
-          if (typeof Audio !== 'undefined') {
-            try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp+dnZygo6esnZGJgoiTpLrK0M/GurCsq7C5x9PZ2NDCsJ+Uk5Wgr8HS3+DYyru0tbvG1eHo5t3OvrCpqKyzvczc5Obi2My/tK+usMHR4Ojp4dXJvrSur7fE1eDn6OHWyL2zrrC4x9Xg5+fi2cvAtrGxtMDS3+fp5drNwba0trnH1uDo6eTdz8O5tbW4wtTg6Orl4dPIvrm3usPV4ejr5+LWzMK8urrD1+Hq7ejk2tDGwLy8wcnZ4+vs6OXc08nDwL/Ey9rk7O3p5t3Vy8fExMjO2+Tu7uro4NjQy8jHyc/d5e7v7Orn4drTzsvKzNTf5+/w7uvn4t3X0s/O0Nfh6fDx7+3q5uHc2NTS0dPa4+vy8vDu6+fj39vX1dTW3OTq8vPx7+zp5ODb19XV1tvi6fHz8vDt6ubj39zY1tbY3+Xr8/Ty8O3q5+Tf3NnY19rf5Ovz9PPx7uro5ODd2tnZ2t/l6/P09PH').play(); } catch(e) {}
-          }
-        }
+        if (timerRunning && timerSeconds > 0) interval = setInterval(() => setTimerSeconds(s => s - 1), 1000);
+        else if (timerSeconds === 0) { setTimerRunning(false); try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp+dnZygo6esnZGJgoiTpLrK0M/GurCsq7C5x9PZ2NDCsJ+Uk5Wgr8HS3+DYyru0tbvG1eHo5t3OvrCpqKyzvczc5Obi2My/tK+usMHR4Ojp4dXJvrSur7fE1eDn6OHWyL2zrrC4x9Xg5+fi2cvAtrGxtMDS3+fp5drNwba0trnH1uDo6eTdz8O5tbW4wtTg6Orl4dPIvrm3usPV4ejr5+LWzMK8urrD1+Hq7ejk2tDGwLy8wcnZ4+vs6OXc08nDwL/Ey9rk7O3p5t3Vy8fExMjO2+Tu7uro4NjQy8jHyc/d5e7v7Orn4drTzsvKzNTf5+/w7uvn4t3X0s/O0Nfh6fDx7+3q5uHc2NTS0dPa4+vy8vDu6+fj39vX1dTW3OTq8vPx7+zp5ODb19XV1tvi6fHz8vDt6ubj39zY1tbY3+Xr8/Ty8O3q5+Tf3NnY19rf5Ovz9PPx7uro5ODd2tnZ2t/l6/P09PH').play(); } catch(e) {} }
         return () => clearInterval(interval);
       }, [timerRunning, timerSeconds]);
 
-      const formatTime = (secs) => {
-        const m = Math.floor(secs / 60);
-        const s = secs % 60;
-        return `${m}:${s.toString().padStart(2, '0')}`;
-      };
+      const formatTime = (secs) => `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
+      const timerPresets = { rest: [30, 60, 90, 120, 180], hiit: [20, 30, 45, 60] };
 
-      const timerPresets = {
-        rest: [30, 60, 90, 120, 180],
-        hiit: [20, 30, 45, 60]
-      };
-
-      // Stats calculations
       const getTimeGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'GOOD MORNING';
-        if (hour < 17) return 'GOOD AFTERNOON';
-        if (hour < 21) return 'GOOD EVENING';
-        return 'LATE NIGHT GRIND';
+        if (hour < 12) return 'Good morning';
+        if (hour < 17) return 'Good afternoon';
+        if (hour < 21) return 'Good evening';
+        return 'Late night grind';
       };
 
       const getWeeklyStats = () => {
         let mealsHit = 0, totalMeals = 0, workoutsHit = 0, waterTotal = 0;
         days.forEach(d => {
           if (weekData[d]) {
-            if (weekData[d].meal1) mealsHit++;
-            if (weekData[d].meal2) mealsHit++;
-            if (weekData[d].meal3) mealsHit++;
-            totalMeals += 3;
-            if (weekData[d].training) workoutsHit++;
-            waterTotal += weekData[d].water || 0;
+            if (weekData[d].meal1) mealsHit++; if (weekData[d].meal2) mealsHit++; if (weekData[d].meal3) mealsHit++;
+            totalMeals += 3; if (weekData[d].training) workoutsHit++; waterTotal += weekData[d].water || 0;
           }
         });
-        const consistency = totalMeals > 0 ? Math.round((mealsHit / totalMeals) * 100) : 0;
-        return { mealsHit, workoutsHit, consistency, waterTotal };
+        return { mealsHit, workoutsHit, consistency: totalMeals > 0 ? Math.round((mealsHit / totalMeals) * 100) : 0, waterTotal };
       };
 
       const getStreak = () => {
@@ -276,455 +224,410 @@
         const todayIdx = new Date().getDay();
         for (let i = 0; i <= todayIdx; i++) {
           const d = dayOrder[i];
-          if (weekData[d] && (weekData[d].meal1 || weekData[d].meal2 || weekData[d].meal3 || weekData[d].training)) {
-            streak++;
-          }
+          if (weekData[d] && (weekData[d].meal1 || weekData[d].meal2 || weekData[d].meal3 || weekData[d].training)) streak++;
         }
         return streak;
-      };
-
-      const getWeightTrend = () => {
-        const weights = [];
-        Object.keys(workoutLog).sort().forEach(date => {
-          Object.keys(workoutLog[date] || {}).forEach(wType => {
-            Object.keys(workoutLog[date][wType] || {}).forEach(ex => {
-              const w = workoutLog[date][wType][ex]?.weight;
-              if (w) weights.push({ date, weight: parseFloat(w), exercise: ex });
-            });
-          });
-        });
-        return weights;
       };
 
       const getNextWorkout = () => {
         const rotation = ['push', 'pull', 'legs'];
         const lastWorkouts = [];
         Object.keys(workoutLog).sort().reverse().slice(0, 3).forEach(date => {
-          Object.keys(workoutLog[date] || {}).forEach(wType => {
-            if (!lastWorkouts.includes(wType)) lastWorkouts.push(wType);
-          });
+          Object.keys(workoutLog[date] || {}).forEach(wType => { if (!lastWorkouts.includes(wType)) lastWorkouts.push(wType); });
         });
         if (lastWorkouts.length === 0) return 'push';
         const lastIdx = rotation.indexOf(lastWorkouts[0]);
         return rotation[(lastIdx + 1) % 3];
       };
 
+      const getYouTubeId = (url) => { const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/); return match ? match[1] : null; };
+      const addVideo = () => {
+        const videoId = getYouTubeId(newVideoUrl);
+        if (videoId && !videos.find(v => v.id === videoId)) {
+          const newVideos = [...videos, { id: videoId, title: 'Custom Video', category: 'custom' }];
+          setVideos(newVideos); localStorage.setItem('videos', JSON.stringify(newVideos)); setNewVideoUrl('');
+        }
+      };
+      const removeVideo = (videoId) => { const newVideos = videos.filter(v => v.id !== videoId); setVideos(newVideos); localStorage.setItem('videos', JSON.stringify(newVideos)); if (activeVideo === videoId) setActiveVideo(null); };
+
+      const today = getTodayString();
+      const todayData = weekData[today] || {};
+      const progress = ((233 - parseFloat(currentWeight)) / 43) * 100;
       const weeklyStats = getWeeklyStats();
       const streak = getStreak();
       const nextWorkout = getNextWorkout();
       const lbsLost = Math.max(0, 233 - parseFloat(currentWeight || 233)).toFixed(1);
 
-      const removeVideo = (videoId) => {
-        const newVideos = videos.filter(v => v.id !== videoId);
-        setVideos(newVideos);
-        localStorage.setItem('videos', JSON.stringify(newVideos));
-        if (activeVideo === videoId) setActiveVideo(null);
-      };
+      const Card = ({ children, className = '', onClick }) => (
+        <div onClick={onClick} className={`bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50 transition-all duration-300 ${onClick ? 'cursor-pointer hover:bg-slate-800/70 hover:border-slate-600/50' : ''} ${className}`}>
+          {children}
+        </div>
+      );
 
-      const today = getTodayString();
-      const todayData = weekData[today] || {};
-      const progress = ((233 - parseFloat(currentWeight)) / 43) * 100;
+      const Button = ({ children, active, color = 'emerald', onClick, className = '' }) => (
+        <button onClick={onClick} className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${active ? `bg-${color}-500/20 text-${color}-400 border border-${color}-500/30` : 'bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:bg-slate-700/50'} ${className}`}>
+          {children}
+        </button>
+      );
 
       return (
-        <div className="min-h-screen bg-black text-white p-4 pb-24">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-6 border-b-2 border-red-900 pb-4">
-              <h1 className="text-3xl font-black tracking-wider">CALL ME AHAB...</h1>
-              <p className="text-red-400 font-bold">CURRENT: {currentWeight} LBS → TARGET: 190 LBS</p>
-              <div className="mt-3 bg-gradient-to-r from-red-950/50 to-black border-l-4 border-red-600 p-3 rounded">
-                <p className={`text-sm italic text-red-300 transition-opacity duration-500 ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>"{currentQuote.quote}" <span className="text-red-500 font-black not-italic">— {currentQuote.char}</span></p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-4 pb-24">
+          <div className="max-w-lg mx-auto">
+            {/* Header */}
+            <div className="mb-6 text-center">
+              <h1 className="text-2xl font-light tracking-widest text-slate-300 mb-1">AHAB</h1>
+              <div className="flex items-center justify-center gap-2 text-emerald-400">
+                <span className="text-lg font-semibold">{currentWeight}</span>
+                <span className="text-slate-500">→</span>
+                <span className="text-lg font-semibold">190 lbs</span>
               </div>
             </div>
 
-            <div className="bg-black border-2 border-red-900 rounded p-6 mb-6">
-              <div className="w-full bg-red-950 border border-red-900 rounded-full h-3 mb-2">
-                <div className="bg-gradient-to-r from-red-700 to-red-500 h-3 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }} />
+            {/* Progress Bar */}
+            <Card className="mb-6">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-400">Progress</span>
+                <span className="text-emerald-400 font-medium">{progress.toFixed(1)}%</span>
               </div>
-              <p className="text-sm text-red-300 text-center font-bold">{progress.toFixed(1)}% CONQUERED</p>
+              <div className="w-full bg-slate-700/50 rounded-full h-2">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(progress, 100)}%` }} />
+              </div>
+            </Card>
+
+            {/* Quote */}
+            <div className={`mb-6 transition-opacity duration-500 ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
+              <p className="text-slate-400 text-sm italic text-center">"{currentQuote.quote}"</p>
+              <p className="text-slate-500 text-xs text-center mt-1">— {currentQuote.char}</p>
             </div>
 
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {/* Navigation */}
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
               {['home', 'meals', 'workouts', 'timer', 'grocery', 'watch'].map(v => (
-                <button key={v} onClick={() => setCurrentView(v)} className={`px-3 py-2 rounded font-black uppercase border-2 text-sm whitespace-nowrap ${currentView === v ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{v}</button>
+                <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300 ${currentView === v ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:bg-slate-700/50'}`}>
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
               ))}
             </div>
 
+            {/* HOME */}
             {currentView === 'home' && (
-              <div className="space-y-4">
-                {/* Greeting & Streak */}
-                <div className="bg-gradient-to-r from-red-950 to-black border-2 border-red-700 rounded p-4">
+              <div className="space-y-4 animate-fade-in">
+                <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border-emerald-500/20">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-red-500 text-sm font-bold">{getTimeGreeting()}</p>
-                      <h2 className="text-2xl font-black uppercase">WARRIOR</h2>
+                      <p className="text-slate-400 text-sm">{getTimeGreeting()}</p>
+                      <h2 className="text-xl font-semibold text-white">Ready to conquer?</h2>
                     </div>
                     <div className="text-right">
-                      <div className="flex items-center gap-2 justify-end">
-                        <span className="text-3xl">🔥</span>
-                        <span className="text-3xl font-black text-orange-500">{streak}</span>
-                      </div>
-                      <p className="text-xs text-red-400 font-bold">DAY STREAK</p>
+                      <div className="text-3xl font-bold text-orange-400">{streak}</div>
+                      <p className="text-xs text-slate-500">day streak</p>
                     </div>
                   </div>
-                </div>
+                </Card>
 
-                {/* Stats Dashboard */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-black border-2 border-red-900 rounded p-3 text-center">
-                    <p className="text-2xl font-black text-red-400">{lbsLost}</p>
-                    <p className="text-xs text-red-600 font-bold">LBS LOST</p>
-                  </div>
-                  <div className="bg-black border-2 border-red-900 rounded p-3 text-center">
-                    <p className="text-2xl font-black text-red-400">{weeklyStats.workoutsHit}/7</p>
-                    <p className="text-xs text-red-600 font-bold">WORKOUTS</p>
-                  </div>
-                  <div className="bg-black border-2 border-red-900 rounded p-3 text-center">
-                    <p className="text-2xl font-black text-red-400">{weeklyStats.consistency}%</p>
-                    <p className="text-xs text-red-600 font-bold">MEAL CONSISTENCY</p>
-                  </div>
-                  <div className="bg-black border-2 border-blue-900 rounded p-3 text-center">
-                    <p className="text-2xl font-black text-blue-400">{weeklyStats.waterTotal}</p>
-                    <p className="text-xs text-blue-600 font-bold">GLASSES H2O</p>
-                  </div>
+                  <Card>
+                    <p className="text-2xl font-bold text-emerald-400">{lbsLost}</p>
+                    <p className="text-xs text-slate-500">lbs lost</p>
+                  </Card>
+                  <Card>
+                    <p className="text-2xl font-bold text-emerald-400">{weeklyStats.workoutsHit}/7</p>
+                    <p className="text-xs text-slate-500">workouts</p>
+                  </Card>
+                  <Card>
+                    <p className="text-2xl font-bold text-emerald-400">{weeklyStats.consistency}%</p>
+                    <p className="text-xs text-slate-500">meal consistency</p>
+                  </Card>
+                  <Card>
+                    <p className="text-2xl font-bold text-sky-400">{weeklyStats.waterTotal}</p>
+                    <p className="text-xs text-slate-500">glasses water</p>
+                  </Card>
                 </div>
 
-                {/* Next Workout Suggestion */}
-                <div className="bg-gradient-to-r from-orange-950/50 to-black border-2 border-orange-700 rounded p-4 cursor-pointer" onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }}>
+                <Card onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }} className="bg-gradient-to-r from-orange-500/10 to-amber-500/5 border-orange-500/20">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs text-orange-500 font-bold">NEXT UP</p>
-                      <p className="text-xl font-black text-orange-400 uppercase">{workouts[nextWorkout].name} DAY</p>
+                      <p className="text-xs text-slate-500 uppercase tracking-wide">Next workout</p>
+                      <p className="text-lg font-semibold text-orange-400">{workouts[nextWorkout].name} Day</p>
                     </div>
-                    <span className="text-2xl">→</span>
+                    <span className="text-slate-500 text-xl">→</span>
                   </div>
-                </div>
+                </Card>
 
-                {/* Today's Tracking */}
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h3 className="text-lg font-black mb-3 uppercase text-red-400">{today}'s LOG</h3>
-
+                <Card>
+                  <h3 className="text-sm font-medium text-slate-400 mb-4">{today}'s Log</h3>
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-red-500 font-bold text-sm">WEIGHT</span>
-                    <input type="number" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="w-24 bg-red-950 border-2 border-red-800 rounded px-3 py-2 font-black text-red-300" />
-                    <span className="text-red-400 font-bold">{currentWeight} LBS</span>
+                    <span className="text-slate-500 text-sm w-16">Weight</span>
+                    <input type="number" placeholder="lbs" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="flex-1 bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
                   </div>
-
                   <div className="mb-4">
-                    <span className="text-blue-500 font-bold text-sm block mb-2">WATER</span>
+                    <span className="text-slate-500 text-sm block mb-2">Water intake</span>
                     <div className="flex gap-1">
                       {[1,2,3,4,5,6,7,8].map(n => (
-                        <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`w-9 h-9 rounded-full text-sm font-black border-2 ${(todayData.water || 0) >= n ? 'bg-blue-700 border-blue-500' : 'bg-black text-blue-900 border-blue-900'}`}>{n}</button>
+                        <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`flex-1 h-10 rounded-xl text-sm font-medium transition-all duration-300 ${(todayData.water || 0) >= n ? 'bg-sky-500/30 text-sky-400 border border-sky-500/30' : 'bg-slate-700/30 text-slate-600 border border-slate-700/30'}`}>{n}</button>
                       ))}
                     </div>
                   </div>
-
                   <div className="grid grid-cols-4 gap-2">
-                    {['meal1', 'meal2', 'meal3'].map(m => (
-                      <button key={m} onClick={() => toggleMeal(today, m)} className={`flex flex-col items-center p-3 rounded border-2 ${todayData[m] ? 'bg-red-800 border-red-600' : 'bg-black text-red-400 border-red-900'}`}>
-                        <span className="font-black text-sm">{m.replace('meal', 'M')}</span>
+                    {['meal1', 'meal2', 'meal3'].map((m, i) => (
+                      <button key={m} onClick={() => toggleMeal(today, m)} className={`py-3 rounded-xl text-sm font-medium transition-all duration-300 ${todayData[m] ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700/30 text-slate-500 border border-slate-700/30'}`}>
+                        M{i + 1}
                       </button>
                     ))}
-                    <button onClick={() => toggleMeal(today, 'training')} className={`flex flex-col items-center p-3 rounded border-2 ${todayData.training ? 'bg-orange-700 border-orange-500' : 'bg-black text-orange-400 border-orange-900'}`}>
-                      <span className="font-black text-sm">GYM</span>
+                    <button onClick={() => toggleMeal(today, 'training')} className={`py-3 rounded-xl text-sm font-medium transition-all duration-300 ${todayData.training ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-slate-700/30 text-slate-500 border border-slate-700/30'}`}>
+                      Gym
                     </button>
                   </div>
-                </div>
+                </Card>
 
-                {/* Milestones */}
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h3 className="text-sm font-black mb-3 uppercase text-red-500">MILESTONES</h3>
-                  <div className="flex justify-between text-xs">
-                    {[10, 25, 50, 75, 100].map(m => (
-                      <div key={m} className={`text-center ${progress >= m ? 'text-red-400' : 'text-red-900'}`}>
-                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-black mb-1 ${progress >= m ? 'bg-red-700 border-red-500' : 'border-red-900'}`}>
-                          {progress >= m ? '✓' : m}
-                        </div>
-                        <span>{m}%</span>
+                <div className="flex justify-between px-2">
+                  {[10, 25, 50, 75, 100].map(m => (
+                    <div key={m} className="text-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${progress >= m ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-600 border border-slate-700/30'}`}>
+                        {progress >= m ? '✓' : `${m}%`}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
+            {/* MEALS */}
             {currentView === 'meals' && (
-              <div className="space-y-4 relative">
-                {/* YUM Popup */}
+              <div className="space-y-4 animate-fade-in relative">
                 {showYum && (
                   <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-                    <div className="text-6xl font-black text-green-400 animate-pulse" style={{animation: 'yumPop 1s ease-out forwards'}}>
-                      YUM! 🔥
-                    </div>
+                    <div className="text-5xl font-bold text-emerald-400" style={{animation: 'yumPop 1s ease-out forwards'}}>Delicious!</div>
                   </div>
                 )}
 
-                {/* Daily Summary */}
-                <div className="bg-gradient-to-r from-red-950 to-black border-2 border-red-700 rounded p-4">
+                <Card className="bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border-emerald-500/20">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs text-red-500 font-bold">TODAY'S FUEL</p>
-                      <p className="text-2xl font-black">{todayData.meal1 && todayData.meal2 && todayData.meal3 ? '2100' : todayData.meal1 && todayData.meal2 ? '1400' : todayData.meal1 || todayData.meal2 || todayData.meal3 ? '700' : '0'} <span className="text-red-500 text-lg">/ 2100 cals</span></p>
+                      <p className="text-xs text-slate-500 uppercase tracking-wide">Today's fuel</p>
+                      <p className="text-2xl font-bold text-white">
+                        {(todayData.meal1 ? 700 : 0) + (todayData.meal2 ? 700 : 0) + (todayData.meal3 ? 700 : 0)}
+                        <span className="text-slate-500 text-lg font-normal"> / 2100 cal</span>
+                      </p>
                     </div>
                     <div className="flex gap-1">
                       {['meal1', 'meal2', 'meal3'].map(m => (
-                        <div key={m} className={`w-4 h-4 rounded-full ${todayData[m] ? 'bg-green-500' : 'bg-red-900'}`}></div>
+                        <div key={m} className={`w-3 h-3 rounded-full transition-colors duration-300 ${todayData[m] ? 'bg-emerald-400' : 'bg-slate-700'}`}></div>
                       ))}
                     </div>
                   </div>
-                </div>
-
-                {/* Meal Timing Guide */}
-                <div className="bg-black border-2 border-red-900 rounded p-3">
-                  <p className="text-xs text-red-500 font-bold mb-2">OPTIMAL TIMING</p>
-                  <div className="flex justify-between text-xs text-red-400">
-                    <span>🌅 Breakfast: 7-9am</span>
-                    <span>☀️ Lunch: 12-2pm</span>
-                    <span>🌙 Dinner: 6-8pm</span>
-                  </div>
-                </div>
+                </Card>
 
                 {meals.map((m, idx) => (
-                  <div key={m.id} className={`bg-black border-2 rounded p-4 transition-all ${todayData[m.id] ? 'border-green-700 bg-green-950/20' : 'border-red-900'}`}>
-                    <div className="flex justify-between items-center mb-3 pb-2 border-b-2 border-red-900">
+                  <Card key={m.id} className={`transition-all duration-300 ${todayData[m.id] ? 'bg-emerald-500/5 border-emerald-500/20' : ''}`}>
+                    <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => { toggleMeal(today, m.id); if (!todayData[m.id]) triggerYum(); }}
-                          className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center font-black transition-all ${todayData[m.id] ? 'bg-green-600 border-green-400 text-white' : 'bg-black border-red-700 text-red-700'}`}
-                        >
-                          {todayData[m.id] ? '✓' : ''}
+                        <button onClick={() => { toggleMeal(today, m.id); if (!todayData[m.id]) triggerYum(); }} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 ${todayData[m.id] ? 'bg-emerald-500 text-white' : 'bg-slate-700/50 border border-slate-600/50 text-slate-600'}`}>
+                          {todayData[m.id] && '✓'}
                         </button>
-                        <h3 className="text-xl font-black uppercase">{m.name}</h3>
+                        <div>
+                          <h3 className="font-semibold text-white">{m.name}</h3>
+                          <p className="text-xs text-slate-500">{idx === 0 ? 'Morning fuel' : idx === 1 ? 'Midday power' : 'Evening recovery'}</p>
+                        </div>
                       </div>
-                      <span className="text-red-500 font-black text-lg">{m.calories} <span className="text-sm text-red-600">cals</span></span>
+                      <span className="text-emerald-400 font-semibold">{m.calories} cal</span>
                     </div>
-                    <ul className="space-y-2 mb-3">
-                      {m.items.map((it, i) => <li key={i} className="text-red-300 flex items-center gap-2"><span className="text-red-600">•</span> {it}</li>)}
+                    <ul className="space-y-1 mb-3">
+                      {m.items.map((it, i) => <li key={i} className="text-slate-400 text-sm flex items-center gap-2"><span className="w-1 h-1 bg-slate-600 rounded-full"></span>{it}</li>)}
                     </ul>
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm text-red-400 font-bold">{m.macros}</p>
-                      <span className="text-xs text-red-600">{idx === 0 ? 'PRE-WORKOUT FUEL' : idx === 1 ? 'RECOVERY MEAL' : 'MUSCLE BUILDER'}</span>
-                    </div>
-                  </div>
+                    <p className="text-xs text-slate-500">{m.macros}</p>
+                  </Card>
                 ))}
 
-                {/* Macros Summary */}
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <p className="text-sm font-black text-red-500 uppercase mb-3">DAILY MACRO TOTALS</p>
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-red-950/50 rounded p-2">
-                      <p className="text-xl font-black text-red-400">200g</p>
-                      <p className="text-xs text-red-600">PROTEIN</p>
+                <Card>
+                  <p className="text-sm font-medium text-slate-400 mb-3">Daily totals</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center p-3 bg-slate-700/30 rounded-xl">
+                      <p className="text-lg font-bold text-emerald-400">200g</p>
+                      <p className="text-xs text-slate-500">Protein</p>
                     </div>
-                    <div className="bg-red-950/50 rounded p-2">
-                      <p className="text-xl font-black text-red-400">180g</p>
-                      <p className="text-xs text-red-600">CARBS</p>
+                    <div className="text-center p-3 bg-slate-700/30 rounded-xl">
+                      <p className="text-lg font-bold text-amber-400">180g</p>
+                      <p className="text-xs text-slate-500">Carbs</p>
                     </div>
-                    <div className="bg-red-950/50 rounded p-2">
-                      <p className="text-xl font-black text-red-400">60g</p>
-                      <p className="text-xs text-red-600">FAT</p>
+                    <div className="text-center p-3 bg-slate-700/30 rounded-xl">
+                      <p className="text-lg font-bold text-orange-400">60g</p>
+                      <p className="text-xs text-slate-500">Fat</p>
                     </div>
                   </div>
-                </div>
-
-                {/* Pro Tip */}
-                <div className="bg-gradient-to-r from-orange-950/50 to-black border-l-4 border-orange-600 p-3 rounded">
-                  <p className="text-orange-400 font-bold text-sm">💡 PRO TIP</p>
-                  <p className="text-orange-300 text-xs mt-1">Eat protein within 30 min of training for optimal muscle recovery. Space meals 4-5 hours apart.</p>
-                </div>
+                </Card>
               </div>
             )}
 
+            {/* WORKOUTS */}
             {currentView === 'workouts' && (
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-2 mb-4 items-center">
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex gap-2 mb-2">
                   {Object.keys(workouts).map(w => (
-                    <button key={w} onClick={() => setSelectedWorkout(w)} className={`px-4 py-2 rounded font-black uppercase border-2 ${selectedWorkout === w ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{workouts[w].name}</button>
+                    <button key={w} onClick={() => setSelectedWorkout(w)} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${selectedWorkout === w ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50'}`}>{workouts[w].name}</button>
                   ))}
-                  <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="ml-auto bg-red-950 border-2 border-red-800 rounded px-3 py-2 font-bold text-red-300" />
                 </div>
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h2 className="text-2xl font-black uppercase mb-4 text-red-400">{workouts[selectedWorkout].name} Day</h2>
+                <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2 text-slate-300 focus:outline-none focus:border-emerald-500/50" />
+
+                <Card>
+                  <h2 className="text-lg font-semibold text-white mb-4">{workouts[selectedWorkout].name} Day</h2>
                   <div className="space-y-4">
                     {workouts[selectedWorkout].exercises.map((ex, i) => {
                       const exData = getExerciseData(workoutDate, selectedWorkout, ex);
                       const history = getWorkoutHistory(selectedWorkout, ex);
                       return (
-                        <div key={i} className="p-4 bg-red-950/30 border border-red-900 rounded">
+                        <div key={i} className="p-4 bg-slate-700/30 rounded-xl">
                           <div className="flex items-center gap-3 mb-3">
-                            <span className="text-red-500 font-black text-lg">{i + 1}</span>
-                            <span className="text-red-300 font-bold text-lg">{ex}</span>
+                            <span className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-sm font-medium">{i + 1}</span>
+                            <span className="font-medium text-white">{ex}</span>
                           </div>
-                          <div className="grid grid-cols-3 gap-2 mb-3">
-                            <div>
-                              <label className="text-xs text-red-500 font-bold">WEIGHT</label>
-                              <input type="number" placeholder="lbs" value={exData.weight} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, 'weight', e.target.value)} className="w-full bg-black border-2 border-red-800 rounded px-2 py-1 text-red-300 font-bold" />
-                            </div>
-                            <div>
-                              <label className="text-xs text-red-500 font-bold">SETS</label>
-                              <input type="number" placeholder="sets" value={exData.sets} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, 'sets', e.target.value)} className="w-full bg-black border-2 border-red-800 rounded px-2 py-1 text-red-300 font-bold" />
-                            </div>
-                            <div>
-                              <label className="text-xs text-red-500 font-bold">REPS</label>
-                              <input type="number" placeholder="reps" value={exData.reps} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, 'reps', e.target.value)} className="w-full bg-black border-2 border-red-800 rounded px-2 py-1 text-red-300 font-bold" />
-                            </div>
+                          <div className="grid grid-cols-3 gap-2 mb-2">
+                            {['weight', 'sets', 'reps'].map(field => (
+                              <div key={field}>
+                                <label className="text-xs text-slate-500 uppercase tracking-wide">{field}</label>
+                                <input type="number" placeholder={field === 'weight' ? 'lbs' : '#'} value={exData[field]} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, field, e.target.value)} className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50" />
+                              </div>
+                            ))}
                           </div>
                           {history.length > 0 && (
-                            <div className="border-t border-red-900 pt-2 mt-2">
-                              <p className="text-xs text-red-600 font-bold mb-1">HISTORY</p>
-                              <div className="flex flex-wrap gap-2">
-                                {history.map((h, hi) => (
-                                  <span key={hi} className="text-xs bg-black border border-red-900 rounded px-2 py-1 text-red-400">
-                                    {h.date}: {h.weight}lbs × {h.sets}×{h.reps}
-                                  </span>
-                                ))}
-                              </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {history.map((h, hi) => (
+                                <span key={hi} className="text-xs bg-slate-800/50 text-slate-400 rounded-lg px-2 py-1">{h.date.slice(5)}: {h.weight}×{h.sets}×{h.reps}</span>
+                              ))}
                             </div>
                           )}
                         </div>
                       );
                     })}
                   </div>
-                </div>
+                </Card>
               </div>
             )}
 
+            {/* TIMER */}
             {currentView === 'timer' && (
-              <div className="space-y-4">
-                {/* Timer Display */}
-                <div className="bg-black border-2 border-red-900 rounded p-6 text-center">
-                  <div className={`text-7xl font-black mb-4 ${timerSeconds <= 10 && timerSeconds > 0 ? 'text-red-500 animate-pulse' : 'text-red-400'}`}>
+              <div className="space-y-4 animate-fade-in">
+                <Card className="text-center py-8">
+                  <div className={`text-6xl font-light mb-6 transition-colors duration-300 ${timerSeconds <= 10 && timerSeconds > 0 ? 'text-red-400' : 'text-white'}`} style={timerSeconds <= 10 && timerSeconds > 0 ? {animation: 'pulse 1s infinite'} : {}}>
                     {formatTime(timerSeconds)}
                   </div>
                   <div className="flex justify-center gap-3">
-                    <button onClick={() => setTimerRunning(!timerRunning)} className={`px-8 py-3 rounded font-black uppercase border-2 text-lg ${timerRunning ? 'bg-yellow-700 border-yellow-500' : 'bg-green-700 border-green-500'}`}>
-                      {timerRunning ? 'PAUSE' : 'START'}
+                    <button onClick={() => setTimerRunning(!timerRunning)} className={`px-8 py-3 rounded-xl font-medium transition-all duration-300 ${timerRunning ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                      {timerRunning ? 'Pause' : 'Start'}
                     </button>
-                    <button onClick={() => { setTimerRunning(false); setTimerSeconds(timerMode === 'rest' ? 90 : 30); }} className="px-6 py-3 bg-black border-2 border-red-900 rounded font-black uppercase text-lg text-red-400">
-                      RESET
+                    <button onClick={() => { setTimerRunning(false); setTimerSeconds(timerMode === 'rest' ? 90 : 30); }} className="px-6 py-3 bg-slate-800/50 text-slate-400 border border-slate-700/50 rounded-xl font-medium">
+                      Reset
                     </button>
                   </div>
-                </div>
+                </Card>
 
-                {/* Timer Mode */}
                 <div className="flex gap-2">
-                  <button onClick={() => { setTimerMode('rest'); setTimerSeconds(90); setTimerRunning(false); }} className={`flex-1 py-3 rounded font-black uppercase border-2 ${timerMode === 'rest' ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>
-                    REST TIMER
+                  <button onClick={() => { setTimerMode('rest'); setTimerSeconds(90); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-medium transition-all duration-300 ${timerMode === 'rest' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50'}`}>
+                    Rest Timer
                   </button>
-                  <button onClick={() => { setTimerMode('hiit'); setTimerSeconds(30); setTimerRunning(false); }} className={`flex-1 py-3 rounded font-black uppercase border-2 ${timerMode === 'hiit' ? 'bg-orange-700 border-orange-500' : 'bg-black text-orange-400 border-orange-900'}`}>
+                  <button onClick={() => { setTimerMode('hiit'); setTimerSeconds(30); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-medium transition-all duration-300 ${timerMode === 'hiit' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50'}`}>
                     HIIT
                   </button>
                 </div>
 
-                {/* Presets */}
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h3 className="text-sm font-black text-red-500 uppercase mb-3">QUICK SET</h3>
+                <Card>
+                  <p className="text-sm text-slate-500 mb-3">Quick set</p>
                   <div className="flex flex-wrap gap-2">
                     {timerPresets[timerMode].map(secs => (
-                      <button key={secs} onClick={() => { setTimerSeconds(secs); setTimerRunning(false); }} className={`px-4 py-2 rounded font-black border-2 ${timerSeconds === secs && !timerRunning ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>
+                      <button key={secs} onClick={() => { setTimerSeconds(secs); setTimerRunning(false); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${timerSeconds === secs && !timerRunning ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700/30 text-slate-400 border border-slate-700/30'}`}>
                         {formatTime(secs)}
                       </button>
                     ))}
                   </div>
-                </div>
-
-                {/* Tips */}
-                <div className="bg-gradient-to-r from-red-950/50 to-black border-l-4 border-red-600 p-4 rounded">
-                  {timerMode === 'rest' ? (
-                    <div>
-                      <p className="text-red-400 font-bold text-sm">REST TIMER TIPS</p>
-                      <p className="text-red-300 text-xs mt-1">• Strength: 2-3 min rest</p>
-                      <p className="text-red-300 text-xs">• Hypertrophy: 60-90 sec rest</p>
-                      <p className="text-red-300 text-xs">• Endurance: 30-60 sec rest</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-orange-400 font-bold text-sm">HIIT TIPS</p>
-                      <p className="text-orange-300 text-xs mt-1">• Work:Rest ratio 1:2 for beginners</p>
-                      <p className="text-orange-300 text-xs">• Work:Rest ratio 1:1 for advanced</p>
-                      <p className="text-orange-300 text-xs">• 20-30 sec bursts, max effort</p>
-                    </div>
-                  )}
-                </div>
+                </Card>
               </div>
             )}
 
+            {/* GROCERY */}
             {currentView === 'grocery' && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-r from-orange-900/30 to-black border-2 border-orange-700 rounded p-4">
-                  <h2 className="text-xl font-black text-orange-400 uppercase mb-3">BULK SUPPLY</h2>
+              <div className="space-y-4 animate-fade-in">
+                <Card>
+                  <h2 className="font-semibold text-amber-400 mb-3">Bulk Staples</h2>
                   <div className="space-y-2">
                     {groceryBulk.map(it => (
-                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex gap-3 p-3 rounded border-2 ${groceryChecked[it] ? 'bg-orange-800 border-orange-600' : 'bg-black text-orange-300 border-orange-900'}`}>
-                        <span className={`font-bold ${groceryChecked[it] ? 'line-through' : ''}`}>{it}</span>
+                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${groceryChecked[it] ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-700/30 border border-slate-700/30'}`}>
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${groceryChecked[it] ? 'bg-emerald-500 text-white' : 'bg-slate-600/50'}`}>
+                          {groceryChecked[it] && '✓'}
+                        </div>
+                        <span className={`text-sm transition-all ${groceryChecked[it] ? 'text-slate-500 line-through' : 'text-white'}`}>{it}</span>
                       </button>
                     ))}
                   </div>
-                </div>
+                </Card>
 
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">WEEKLY FRESH</h2>
+                <Card>
+                  <h2 className="font-semibold text-emerald-400 mb-3">Weekly Fresh</h2>
                   <div className="space-y-2">
                     {groceryWeekly.map(it => (
-                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex gap-3 p-3 rounded border-2 ${groceryChecked[it] ? 'bg-red-800 border-red-600' : 'bg-black text-red-300 border-red-900'}`}>
-                        <span className={`font-bold ${groceryChecked[it] ? 'line-through' : ''}`}>{it}</span>
+                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${groceryChecked[it] ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-700/30 border border-slate-700/30'}`}>
+                        <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${groceryChecked[it] ? 'bg-emerald-500 text-white' : 'bg-slate-600/50'}`}>
+                          {groceryChecked[it] && '✓'}
+                        </div>
+                        <span className={`text-sm transition-all ${groceryChecked[it] ? 'text-slate-500 line-through' : 'text-white'}`}>{it}</span>
                       </button>
                     ))}
                   </div>
-                </div>
+                </Card>
               </div>
             )}
 
+            {/* WATCH */}
             {currentView === 'watch' && (
-              <div className="space-y-4">
+              <div className="space-y-4 animate-fade-in">
                 {activeVideo && (
-                  <div className="bg-black border-2 border-red-500 rounded p-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h2 className="text-xl font-black text-red-400 uppercase">NOW PLAYING</h2>
-                      <button onClick={() => setActiveVideo(null)} className="text-red-500 font-black text-xl">✕</button>
+                  <Card className="p-0 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-700/50">
+                      <span className="font-medium text-white">Now Playing</span>
+                      <button onClick={() => setActiveVideo(null)} className="text-slate-500 hover:text-white transition-colors">✕</button>
                     </div>
                     <div className="aspect-video">
-                      <iframe className="w-full h-full rounded" src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                      <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                     </div>
-                  </div>
+                  </Card>
                 )}
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2 overflow-x-auto pb-2">
                   {['all', 'philosophy', 'psychology', 'history', 'custom'].map(cat => (
-                    <button key={cat} onClick={() => setVideoCategory(cat)} className={`px-3 py-1 rounded font-black uppercase text-sm border-2 ${videoCategory === cat ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{cat}</button>
+                    <button key={cat} onClick={() => setVideoCategory(cat)} className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-300 ${videoCategory === cat ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800/50 text-slate-500'}`}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </button>
                   ))}
                 </div>
 
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">VIDEO ESSAYS ({filteredVideos.length})</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {filteredVideos.map(v => (
-                      <div key={v.id} className={`relative group cursor-pointer rounded overflow-hidden border-2 ${activeVideo === v.id ? 'border-red-500' : 'border-red-900'}`} onClick={() => setActiveVideo(v.id)}>
-                        <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="thumbnail" className="w-full aspect-video object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                        <div className="absolute bottom-0 left-0 right-0 p-2">
-                          <p className="text-xs font-bold text-white line-clamp-2">{v.title}</p>
-                          <span className="text-xs text-red-400 uppercase font-black">{v.category}</span>
-                        </div>
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-5xl">▶</span>
-                        </div>
-                        {v.category === 'custom' && (
-                          <button onClick={(e) => { e.stopPropagation(); removeVideo(v.id); }} className="absolute top-1 right-1 bg-black/80 text-red-500 rounded px-2 py-1 text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-                        )}
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredVideos.map(v => (
+                    <div key={v.id} onClick={() => setActiveVideo(v.id)} className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 ${activeVideo === v.id ? 'ring-2 ring-emerald-500' : ''}`}>
+                      <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="thumbnail" className="w-full aspect-video object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 right-0 p-2">
+                        <p className="text-xs font-medium text-white line-clamp-2">{v.title}</p>
+                        <span className="text-xs text-slate-400">{v.category}</span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-3xl text-white">▶</span>
+                      </div>
+                      {v.category === 'custom' && (
+                        <button onClick={(e) => { e.stopPropagation(); removeVideo(v.id); }} className="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                      )}
+                    </div>
+                  ))}
                 </div>
 
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h2 className="text-lg font-black text-red-400 uppercase mb-3">ADD YOUR OWN</h2>
+                <Card>
+                  <p className="text-sm text-slate-500 mb-2">Add your own</p>
                   <div className="flex gap-2">
-                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-red-950 border-2 border-red-800 rounded px-3 py-2 text-red-300 font-bold" />
-                    <button onClick={() => addVideo()} className="px-4 py-2 bg-red-700 border-2 border-red-500 rounded font-black">+</button>
+                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50" />
+                    <button onClick={addVideo} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl font-medium">Add</button>
                   </div>
-                </div>
+                </Card>
               </div>
             )}
+
           </div>
         </div>
       );
