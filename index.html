@@ -106,7 +106,7 @@
         const cycleQuotes = setInterval(() => {
           setQuoteFade(false);
           setTimeout(() => { setQuoteIndex(prev => (prev + 1) % animeQuotes.length); setQuoteFade(true); }, 500);
-        }, 5000);
+        }, 15000);
         return () => clearInterval(cycleQuotes);
       }, []);
 
@@ -293,7 +293,7 @@
 
             {/* Navigation */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-              {['home', 'meals', 'workouts', 'timer', 'grocery', 'watch'].map(v => (
+              {['home', 'meals', 'workouts', 'grocery'].map(v => (
                 <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded-xl text-sm font-bold uppercase whitespace-nowrap transition-all duration-300 ${currentView === v ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'bg-neutral-900 text-red-400 border border-red-900/30 hover:bg-neutral-800'}`}>
                   {v}
                 </button>
@@ -371,6 +371,39 @@
                     <button onClick={() => toggleMeal(today, 'training')} className={`py-3 rounded-xl text-sm font-bold transition-all duration-300 ${todayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-900 text-orange-700 border border-orange-900/30'}`}>
                       GYM
                     </button>
+                  </div>
+                </Card>
+
+                {/* Weekly Overview */}
+                <Card>
+                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-4">WEEKLY OVERVIEW</h3>
+                  <div className="space-y-2">
+                    {days.map(day => {
+                      const dayData = weekData[day] || {};
+                      const isToday = day === today;
+                      const mealsCount = (dayData.meal1 ? 1 : 0) + (dayData.meal2 ? 1 : 0) + (dayData.meal3 ? 1 : 0);
+                      return (
+                        <div key={day} className={`flex items-center gap-3 p-2 rounded-xl transition-all ${isToday ? 'bg-red-950/30 border border-red-700/30' : ''}`}>
+                          <span className={`w-12 text-xs font-bold ${isToday ? 'text-red-400' : 'text-red-600'}`}>{day.slice(0, 3).toUpperCase()}</span>
+                          <div className="flex gap-1 flex-1">
+                            {[dayData.meal1, dayData.meal2, dayData.meal3].map((m, i) => (
+                              <div key={i} className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${m ? 'bg-red-600 text-white' : 'bg-neutral-900 border border-red-900/20 text-red-900'}`}>
+                                {m ? '✓' : i + 1}
+                              </div>
+                            ))}
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${dayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-900 border border-orange-900/20 text-orange-900'}`}>
+                              {dayData.training ? '✓' : 'G'}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            {[1,2,3,4,5,6,7,8].map(n => (
+                              <div key={n} className={`w-2 h-4 rounded-sm ${(dayData.water || 0) >= n ? 'bg-blue-500' : 'bg-neutral-800'}`}></div>
+                            ))}
+                          </div>
+                          {dayData.weight && <span className="text-xs text-red-400 font-bold w-12 text-right">{dayData.weight}</span>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </Card>
 
@@ -498,45 +531,6 @@
               </div>
             )}
 
-            {/* TIMER */}
-            {currentView === 'timer' && (
-              <div className="space-y-4 animate-fade-in">
-                <Card className="text-center py-8" glow={timerRunning}>
-                  <div className={`text-7xl font-black mb-6 transition-colors duration-300 ${timerSeconds <= 10 && timerSeconds > 0 ? 'text-red-500' : 'text-white'}`} style={timerSeconds <= 10 && timerSeconds > 0 ? {animation: 'pulse 1s infinite'} : {}}>
-                    {formatTime(timerSeconds)}
-                  </div>
-                  <div className="flex justify-center gap-3">
-                    <button onClick={() => setTimerRunning(!timerRunning)} className={`px-8 py-3 rounded-xl font-black uppercase transition-all duration-300 ${timerRunning ? 'bg-yellow-600 text-black' : 'bg-green-600 text-white'}`}>
-                      {timerRunning ? 'PAUSE' : 'START'}
-                    </button>
-                    <button onClick={() => { setTimerRunning(false); setTimerSeconds(timerMode === 'rest' ? 90 : 30); }} className="px-6 py-3 bg-neutral-900 text-red-400 border border-red-900/30 rounded-xl font-black uppercase">
-                      RESET
-                    </button>
-                  </div>
-                </Card>
-
-                <div className="flex gap-2">
-                  <button onClick={() => { setTimerMode('rest'); setTimerSeconds(90); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-bold uppercase transition-all duration-300 ${timerMode === 'rest' ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-400 border border-red-900/30'}`}>
-                    REST TIMER
-                  </button>
-                  <button onClick={() => { setTimerMode('hiit'); setTimerSeconds(30); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-bold uppercase transition-all duration-300 ${timerMode === 'hiit' ? 'bg-orange-600 text-white' : 'bg-neutral-900 text-orange-400 border border-orange-900/30'}`}>
-                    HIIT
-                  </button>
-                </div>
-
-                <Card>
-                  <p className="text-sm text-red-500 font-bold uppercase mb-3">QUICK SET</p>
-                  <div className="flex flex-wrap gap-2">
-                    {timerPresets[timerMode].map(secs => (
-                      <button key={secs} onClick={() => { setTimerSeconds(secs); setTimerRunning(false); }} className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${timerSeconds === secs && !timerRunning ? 'bg-red-600 text-white' : 'bg-black text-red-400 border border-red-900/30'}`}>
-                        {formatTime(secs)}
-                      </button>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
             {/* GROCERY */}
             {currentView === 'grocery' && (
               <div className="space-y-4 animate-fade-in">
@@ -565,58 +559,6 @@
                         <span className={`text-sm font-bold transition-all ${groceryChecked[it] ? 'text-green-400/70 line-through' : 'text-red-300'}`}>{it}</span>
                       </button>
                     ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {/* WATCH */}
-            {currentView === 'watch' && (
-              <div className="space-y-4 animate-fade-in">
-                {activeVideo && (
-                  <Card className="p-0 overflow-hidden">
-                    <div className="flex justify-between items-center p-4 border-b border-red-900/30">
-                      <span className="font-black text-red-400 uppercase">NOW PLAYING</span>
-                      <button onClick={() => setActiveVideo(null)} className="text-red-500 hover:text-white transition-colors text-xl">✕</button>
-                    </div>
-                    <div className="aspect-video">
-                      <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                    </div>
-                  </Card>
-                )}
-
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {['all', 'philosophy', 'psychology', 'history', 'custom'].map(cat => (
-                    <button key={cat} onClick={() => setVideoCategory(cat)} className={`px-3 py-1 rounded-lg text-sm font-bold uppercase whitespace-nowrap transition-all duration-300 ${videoCategory === cat ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-400'}`}>
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredVideos.map(v => (
-                    <div key={v.id} onClick={() => setActiveVideo(v.id)} className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 border-2 ${activeVideo === v.id ? 'border-red-500' : 'border-transparent'}`}>
-                      <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="thumbnail" className="w-full aspect-video object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                      <div className="absolute bottom-0 left-0 right-0 p-2">
-                        <p className="text-xs font-bold text-white line-clamp-2">{v.title}</p>
-                        <span className="text-xs text-red-400 uppercase">{v.category}</span>
-                      </div>
-                      <div className="absolute inset-0 bg-red-600/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-4xl text-white">▶</span>
-                      </div>
-                      {v.category === 'custom' && (
-                        <button onClick={(e) => { e.stopPropagation(); removeVideo(v.id); }} className="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <Card>
-                  <p className="text-sm text-red-500 font-bold uppercase mb-2">ADD YOUR OWN</p>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-black border border-red-900/30 rounded-xl px-4 py-2 text-red-400 text-sm font-bold placeholder-red-900 focus:outline-none focus:border-red-600" />
-                    <button onClick={addVideo} className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold">ADD</button>
                   </div>
                 </Card>
               </div>
