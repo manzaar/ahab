@@ -95,20 +95,19 @@
       // Reactor Switch Component
       const ReactorSwitch = ({ engaged, onToggle, label, color = 'red' }) => {
         const colors = {
-          red: { bg: 'from-red-900 to-red-700', glow: 'shadow-red-500/50', text: 'text-red-400' },
-          orange: { bg: 'from-orange-900 to-orange-700', glow: 'shadow-orange-500/50', text: 'text-orange-400' },
-          blue: { bg: 'from-blue-900 to-blue-700', glow: 'shadow-blue-500/50', text: 'text-blue-400' }
+          red: { bg: 'from-red-900 to-red-700', text: 'text-red-400' },
+          orange: { bg: 'from-orange-900 to-orange-700', text: 'text-orange-400' },
+          blue: { bg: 'from-blue-900 to-blue-700', text: 'text-blue-400' }
         };
         const c = colors[color];
         return (
-          <button onClick={onToggle} className={`relative w-full h-12 rounded-xl overflow-hidden transition-all duration-300 ${engaged ? `bg-gradient-to-r ${c.bg} ${c.glow} shadow-lg reactor-engaged` : 'bg-neutral-900 border border-neutral-800'}`}>
+          <button onClick={onToggle} className={`relative w-full h-12 rounded-xl overflow-hidden transition-all duration-300 ${engaged ? `bg-gradient-to-r ${c.bg}` : 'bg-neutral-900 border border-neutral-800'}`}>
             <div className={`absolute inset-0 flex items-center justify-between px-4`}>
               <span className={`text-xs font-bold uppercase tracking-wider ${engaged ? 'text-white' : c.text}`}>{label}</span>
               <div className={`w-14 h-7 rounded-full ${engaged ? 'bg-black/30' : 'bg-neutral-800'} flex items-center p-1 transition-all`}>
-                <div className={`w-5 h-5 rounded-full transition-all duration-300 ${engaged ? `bg-white ml-auto shadow-lg ${c.glow}` : 'bg-neutral-600'}`} />
+                <div className={`w-5 h-5 rounded-full transition-all duration-300 ${engaged ? 'bg-white ml-auto' : 'bg-neutral-600'}`} />
               </div>
             </div>
-            {engaged && <div className="absolute top-1 right-16 text-[8px] text-white/70 font-bold">ENGAGED</div>}
           </button>
         );
       };
