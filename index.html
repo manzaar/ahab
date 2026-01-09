@@ -70,9 +70,11 @@
     /* Safe area for iOS notch */
     body {
       padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
+    }
+    .safe-area-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
     }
   </style>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -530,7 +532,7 @@
       );
 
       return (
-        <div className="min-h-screen bg-black text-white p-4 pb-4 sm:pb-4">
+        <div className="min-h-screen bg-black text-white p-4 pb-20">
           <div className="max-w-lg mx-auto">
             {/* Header */}
             <div className="mb-6 text-center">
@@ -539,7 +541,7 @@
             </div>
 
             {/* Progress Bar */}
-            <Card className="mb-5" glow>
+            <Card className="mb-5">
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-red-400 font-bold uppercase tracking-wide">Progress</span>
                 <span className="text-red-500 font-black">{progress.toFixed(1)}%</span>
@@ -550,14 +552,14 @@
             </Card>
 
             {/* Quote - Fixed Height */}
-            <div className={`mb-5 px-4 py-3 bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-red-600 rounded-r-xl transition-opacity duration-500 h-[85px] flex flex-col justify-center overflow-hidden ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`mb-4 px-4 py-2 bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-red-600 rounded-r-xl transition-opacity duration-500 h-[70px] flex flex-col justify-center overflow-hidden ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
               <p className="text-red-300 text-sm italic overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>"{currentQuote.quote}"</p>
               <p className="text-red-500 text-xs font-bold mt-1 flex-shrink-0">— {currentQuote.char}</p>
             </div>
 
             {/* Navigation - Fixed Bottom on Mobile */}
-            <div className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-sm border-t border-red-900/30 p-2 z-50 sm:relative sm:bg-transparent sm:border-0 sm:p-0 sm:mb-6">
-              <div className="max-w-lg mx-auto grid grid-cols-6 gap-1">
+            <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-red-900/30 px-2 py-1 z-50 safe-area-bottom">
+              <div className="max-w-lg mx-auto grid grid-cols-6 gap-0.5">
                 {[
                   { id: 'home', icon: '🏠', label: 'Home' },
                   { id: 'meals', icon: '🍽️', label: 'Meals' },
@@ -566,16 +568,13 @@
                   { id: 'calendar', icon: '📅', label: 'Cal' },
                   { id: 'grocery', icon: '🛒', label: 'Shop' }
                 ].map(v => (
-                  <button key={v.id} onClick={() => setCurrentView(v.id)} className={`flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${currentView === v.id ? 'bg-red-600/20 text-red-400' : 'text-neutral-500 hover:text-red-400'}`}>
-                    <span className="text-lg sm:text-xl">{v.icon}</span>
-                    <span className="text-[9px] sm:text-[10px] font-bold uppercase mt-0.5">{v.label}</span>
+                  <button key={v.id} onClick={() => setCurrentView(v.id)} className={`flex flex-col items-center py-1.5 rounded-lg transition-all duration-200 ${currentView === v.id ? 'bg-red-600/20 text-red-400' : 'text-neutral-500'}`}>
+                    <span className="text-base">{v.icon}</span>
+                    <span className="text-[8px] font-bold uppercase">{v.label}</span>
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Spacer for fixed bottom nav on mobile */}
-            <div className="h-20 sm:hidden"></div>
 
             {/* HOME */}
             {currentView === 'home' && (
@@ -585,9 +584,9 @@
                   <div className="text-6xl font-bold text-red-500 tracking-wider" style={{fontFamily: 'Orbitron, monospace', textShadow: '0 0 20px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.3)'}}>
                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace(' ', '')}
                   </div>
-                  {/* Countdown to Sept 1, 2026 - Glitch Effect */}
+                  {/* Countdown to Sept 1, 2026 */}
                   <div className="mt-2">
-                    <p className="text-red-600 text-xs font-bold tracking-wider glitch-text" style={{fontFamily: 'Orbitron, monospace'}}>
+                    <p className="text-red-600 text-xs font-bold tracking-wider" style={{fontFamily: 'Orbitron, monospace'}}>
                       DAYS UNTIL SEPT 1, 2026: <span className="text-red-400 text-lg">{Math.max(0, Math.ceil((new Date('2026-09-01') - currentTime) / (1000 * 60 * 60 * 24)))}</span>
                     </p>
                   </div>
