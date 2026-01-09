@@ -84,13 +84,7 @@
       const [calendarMonth, setCalendarMonth] = useState(new Date());
       const [calendarDayDetail, setCalendarDayDetail] = useState(null);
       const [longPressTimer, setLongPressTimer] = useState(null);
-      const [tiltX, setTiltX] = useState(0);
       const [xp, setXp] = useState(0);
-
-      // Hollow Rival (lazy ghost) - earns 30 XP/day passively
-      // The Hunter (titan) - earns 55 XP/day (perfect performance)
-      const hollowRivalXp = Math.floor((Date.now() - new Date('2026-01-01').getTime()) / (1000 * 60 * 60 * 24)) * 30;
-      const hunterXp = Math.floor((Date.now() - new Date('2026-01-01').getTime()) / (1000 * 60 * 60 * 24)) * 55;
 
       // Reactor Switch Component
       const ReactorSwitch = ({ engaged, onToggle, label, color = 'red' }) => {
@@ -287,16 +281,6 @@
         return () => clearInterval(clockInterval);
       }, []);
 
-      // Accelerometer for liquid XP bar
-      useEffect(() => {
-        const handleMotion = (e) => {
-          if (e.accelerationIncludingGravity) {
-            setTiltX(Math.max(-20, Math.min(20, e.accelerationIncludingGravity.x * 3)));
-          }
-        };
-        window.addEventListener('devicemotion', handleMotion);
-        return () => window.removeEventListener('devicemotion', handleMotion);
-      }, []);
 
       // Progressive reward themes based on rank
       const getThemeColors = () => {
@@ -521,7 +505,7 @@
       );
 
       return (
-        <div className="min-h-screen bg-black text-white p-4 pb-24">
+        <div className="min-h-screen bg-black text-white p-4 pb-4 sm:pb-4">
           <div className="max-w-lg mx-auto">
             {/* Header */}
             <div className="mb-6 text-center">
@@ -546,14 +530,27 @@
               <p className="text-red-500 text-xs font-bold mt-1 flex-shrink-0">— {currentQuote.char}</p>
             </div>
 
-            {/* Navigation */}
-            <div className="flex gap-1.5 mb-6 flex-wrap">
-              {['home', 'meals', 'workouts', 'power', 'calendar', 'grocery'].map(v => (
-                <button key={v} onClick={() => setCurrentView(v)} className={`flex-1 min-w-[60px] px-2 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all duration-200 ${currentView === v ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-400/70 border border-red-900/40 hover:text-red-400 hover:border-red-700/50'}`}>
-                  {v}
-                </button>
-              ))}
+            {/* Navigation - Fixed Bottom on Mobile */}
+            <div className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-sm border-t border-red-900/30 p-2 z-50 sm:relative sm:bg-transparent sm:border-0 sm:p-0 sm:mb-6">
+              <div className="max-w-lg mx-auto grid grid-cols-6 gap-1">
+                {[
+                  { id: 'home', icon: '🏠', label: 'Home' },
+                  { id: 'meals', icon: '🍽️', label: 'Meals' },
+                  { id: 'workouts', icon: '💪', label: 'Train' },
+                  { id: 'power', icon: '🏆', label: 'PRs' },
+                  { id: 'calendar', icon: '📅', label: 'Cal' },
+                  { id: 'grocery', icon: '🛒', label: 'Shop' }
+                ].map(v => (
+                  <button key={v.id} onClick={() => setCurrentView(v.id)} className={`flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${currentView === v.id ? 'bg-red-600/20 text-red-400' : 'text-neutral-500 hover:text-red-400'}`}>
+                    <span className="text-lg sm:text-xl">{v.icon}</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase mt-0.5">{v.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Spacer for fixed bottom nav on mobile */}
+            <div className="h-20 sm:hidden"></div>
 
             {/* HOME */}
             {currentView === 'home' && (
@@ -590,7 +587,7 @@
                       <p className="text-xs text-red-500 font-bold">DAY STREAK</p>
                     </div>
                   </div>
-                  {/* Liquid XP Progress Bar */}
+                  {/* XP Progress Bar */}
                   <div>
                     <div className="flex justify-between text-xs mb-1">
                       <span className={`font-bold ${theme.text}`}>{xp} XP</span>
@@ -598,57 +595,7 @@
                       {!getNextRank() && <span className="text-yellow-500 font-bold">MAX RANK</span>}
                     </div>
                     <div className="w-full bg-red-950/50 rounded-full h-3 overflow-hidden">
-                      <div className={`bg-gradient-to-r ${theme.accent} h-3 rounded-full transition-all duration-500 liquid-bar`} style={{ width: `${getXpProgress()}%`, transform: `translateX(${tiltX}px)` }} />
-                    </div>
-                  </div>
-                </Card>
-
-                {/* THE RACE - Hollow Rival & The Hunter */}
-                <Card className="border-purple-900/30">
-                  <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-3">⚔️ THE RACE</h3>
-                  <div className="space-y-3">
-                    {/* Your Position */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">👤</span>
-                      <div className="flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-white font-bold">YOU</span>
-                          <span className="text-white font-bold">{xp} XP</span>
-                        </div>
-                        <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
-                          <div className="h-2 bg-gradient-to-r from-red-600 to-red-400 rounded-full" style={{ width: `${Math.min(100, (xp / Math.max(hunterXp, 1)) * 100)}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                    {/* Hollow Rival */}
-                    <div className="flex items-center gap-3 opacity-60">
-                      <span className="text-lg">👻</span>
-                      <div className="flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-neutral-400 font-bold">HOLLOW RIVAL</span>
-                          <span className="text-neutral-500">{hollowRivalXp} XP</span>
-                        </div>
-                        <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
-                          <div className="h-2 bg-gradient-to-r from-neutral-600 to-neutral-500 rounded-full" style={{ width: `${Math.min(100, (hollowRivalXp / Math.max(hunterXp, 1)) * 100)}%` }} />
-                        </div>
-                      </div>
-                      {xp > hollowRivalXp && <span className="text-green-500 text-xs font-bold">+{xp - hollowRivalXp}</span>}
-                      {xp <= hollowRivalXp && <span className="text-red-500 text-xs font-bold">{xp - hollowRivalXp}</span>}
-                    </div>
-                    {/* The Hunter */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">🏹</span>
-                      <div className="flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-yellow-400 font-bold">THE HUNTER</span>
-                          <span className="text-yellow-500">{hunterXp} XP</span>
-                        </div>
-                        <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
-                          <div className="h-2 bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-full" style={{ width: '100%' }} />
-                        </div>
-                      </div>
-                      {xp >= hunterXp && <span className="text-green-500 text-xs font-bold">MATCHED!</span>}
-                      {xp < hunterXp && <span className="text-yellow-500 text-xs font-bold">-{hunterXp - xp}</span>}
+                      <div className={`bg-gradient-to-r ${theme.accent} h-3 rounded-full transition-all duration-500`} style={{ width: `${getXpProgress()}%` }} />
                     </div>
                   </div>
                 </Card>
@@ -1171,42 +1118,6 @@
             </div>
           )}
 
-          {/* Floating Daily Progress Bar - Hidden at 100% after logging */}
-          {!dayComplete && (
-            <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4 z-40">
-              <div className="max-w-lg mx-auto">
-                <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-3 border border-red-900/30 shadow-lg shadow-black/50">
-                  <div className="flex items-center justify-between gap-2">
-                    {/* Meals */}
-                    <div className="flex gap-1">
-                      {['meal1', 'meal2', 'meal3'].map((m, i) => (
-                        <div key={m} className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData[m] ? 'bg-red-600 text-white' : 'bg-neutral-800 text-red-900 border border-red-900/30'}`}>
-                          {todayData[m] ? '✓' : i + 1}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Gym */}
-                    <div className={`w-7 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-800 text-orange-900 border border-orange-900/30'}`}>
-                      {todayData.training ? '✓' : 'G'}
-                    </div>
-
-                    {/* Water mini-display */}
-                    <div className="flex gap-0.5 items-center">
-                      {[1,2,3,4,5,6,7,8].map(n => (
-                        <div key={n} className={`w-1.5 h-3 rounded-sm transition-all ${(todayData.water || 0) >= n ? 'bg-blue-500' : 'bg-neutral-800'}`}></div>
-                      ))}
-                    </div>
-
-                    {/* Daily % */}
-                    <span className="text-sm font-black text-red-400 min-w-[40px] text-center">
-                      {Math.round((((todayData.meal1 ? 1 : 0) + (todayData.meal2 ? 1 : 0) + (todayData.meal3 ? 1 : 0) + (todayData.training ? 1 : 0)) / 4) * 100)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       );
     };
