@@ -56,6 +56,7 @@
       const [showYum, setShowYum] = useState(false);
       const [showLogged, setShowLogged] = useState(false);
       const [dayComplete, setDayComplete] = useState(false);
+      const [currentTime, setCurrentTime] = useState(new Date());
 
       const logProgress = () => {
         localStorage.setItem('weekData', JSON.stringify(weekData));
@@ -157,6 +158,11 @@
           setTimeout(() => { setQuoteIndex(prev => (prev + 1) % animeQuotes.length); setQuoteFade(true); }, 500);
         }, 15000);
         return () => clearInterval(cycleQuotes);
+      }, []);
+
+      useEffect(() => {
+        const clockInterval = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(clockInterval);
       }, []);
 
       const meals = [
@@ -318,11 +324,7 @@
             {/* Header */}
             <div className="mb-6 text-center">
               <h1 className="text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">CALL ME AHAB</h1>
-              <div className="flex items-center justify-center gap-3 mt-2">
-                <span className="text-xl font-bold text-red-400">{currentWeight}</span>
-                <span className="text-red-700">→</span>
-                <span className="text-xl font-bold text-red-400">190 LBS</span>
-              </div>
+              <p className="text-red-600 text-xs font-bold tracking-[0.3em] mt-1">HUNT THE WHITE WHALE</p>
             </div>
 
             {/* Progress Bar */}
@@ -354,6 +356,21 @@
             {/* HOME */}
             {currentView === 'home' && (
               <div className="space-y-4 animate-fade-in">
+                {/* Casio Digital Clock */}
+                <div className="bg-gradient-to-b from-neutral-800 to-neutral-900 rounded-2xl p-4 border border-neutral-700 shadow-inner">
+                  <div className="bg-[#1a2f1a] rounded-xl p-4 border-2 border-neutral-600 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
+                    <div className="text-center">
+                      <p className="text-[#3d5a3d] text-[10px] font-bold tracking-widest mb-1">CASIO</p>
+                      <div className="font-mono text-5xl font-bold text-[#7fff7f] tracking-wider" style={{textShadow: '0 0 10px rgba(127,255,127,0.5), 0 0 20px rgba(127,255,127,0.3)'}}>
+                        {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                      </div>
+                      <p className="text-[#5a8a5a] text-xs font-mono mt-1">
+                        {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <Card className="bg-gradient-to-br from-red-950/50 to-black border-red-700/30">
                   <div className="flex justify-between items-start">
                     <div>
