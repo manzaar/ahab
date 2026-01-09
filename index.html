@@ -340,9 +340,9 @@
             </Card>
 
             {/* Quote - Fixed Height */}
-            <div className={`mb-5 px-4 py-3 bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-red-600 rounded-r-xl transition-opacity duration-500 min-h-[80px] flex flex-col justify-center ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
-              <p className="text-red-300 text-sm italic line-clamp-2">"{currentQuote.quote}"</p>
-              <p className="text-red-500 text-xs font-bold mt-1">— {currentQuote.char}</p>
+            <div className={`mb-5 px-4 py-3 bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-red-600 rounded-r-xl transition-opacity duration-500 h-[85px] flex flex-col justify-center overflow-hidden ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
+              <p className="text-red-300 text-sm italic overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>"{currentQuote.quote}"</p>
+              <p className="text-red-500 text-xs font-bold mt-1 flex-shrink-0">— {currentQuote.char}</p>
             </div>
 
             {/* Navigation */}
