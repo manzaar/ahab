@@ -26,9 +26,32 @@
       const [quoteIndex, setQuoteIndex] = useState(0);
       const [quoteFade, setQuoteFade] = useState(true);
       const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
-      const [videos, setVideos] = useState([]);
+      const defaultVideos = [
+        // Philosophy
+        { id: 'eC7xzavzEKY', title: 'Why Life Seems to Speed Up as We Age', category: 'philosophy' },
+        { id: 'WPPPFqsECz0', title: 'The philosophy of Stoicism', category: 'philosophy' },
+        { id: 'w8-k_EJW5bY', title: 'Why Socrates Hated Democracy', category: 'philosophy' },
+        { id: '5sD_2jNl5b4', title: 'The Absurd Philosophy of Albert Camus', category: 'philosophy' },
+        { id: 'D7CH9cRN8Rg', title: 'What Is Existentialism?', category: 'philosophy' },
+        // Psychology
+        { id: 'rE3j_RHkqJc', title: 'The Psychology of Self-Deception', category: 'psychology' },
+        { id: 'wfYbgdo8e-8', title: 'Carl Jung - How to Realize Your True Potential', category: 'psychology' },
+        { id: 'n3Xv_g3g-mA', title: 'Dopamine Detox: Why You Should Do It', category: 'psychology' },
+        { id: 'vvivmV4SRRI', title: 'The Psychology of Motivation', category: 'psychology' },
+        { id: 'LO1mTELoj6o', title: 'Why You Procrastinate Even When It Feels Bad', category: 'psychology' },
+        // History
+        { id: 'EbBHk_zLTmY', title: 'History of the Entire World', category: 'history' },
+        { id: 'xuCn8ux2gbs', title: 'History of Japan', category: 'history' },
+        { id: '9BugznGj6bU', title: 'The Fall of Rome Explained', category: 'history' },
+        { id: 'HhMh4kLsy-E', title: 'The History of Alexander the Great', category: 'history' },
+        { id: 'vo4pMVb0R6M', title: 'The Inca Empire Explained', category: 'history' },
+        { id: 'EY6q5dv_B-o', title: 'Genghis Khan - Rise of the Mongol Empire', category: 'history' },
+      ];
+
+      const [videos, setVideos] = useState(defaultVideos);
       const [newVideoUrl, setNewVideoUrl] = useState('');
       const [activeVideo, setActiveVideo] = useState(null);
+      const [videoCategory, setVideoCategory] = useState('all');
 
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       
@@ -103,7 +126,12 @@
         const wl = localStorage.getItem('workouts');
         if (wl) setWorkoutLog(JSON.parse(wl));
         const vids = localStorage.getItem('videos');
-        if (vids) setVideos(JSON.parse(vids));
+        if (vids) {
+          const saved = JSON.parse(vids);
+          const merged = [...defaultVideos];
+          saved.forEach(v => { if (!merged.find(m => m.id === v.id)) merged.push(v); });
+          setVideos(merged);
+        }
       }, []);
 
       const toggleMeal = (day, meal) => {
@@ -163,15 +191,17 @@
         return match ? match[1] : null;
       };
 
-      const addVideo = () => {
+      const addVideo = (category = 'custom') => {
         const videoId = getYouTubeId(newVideoUrl);
         if (videoId && !videos.find(v => v.id === videoId)) {
-          const newVideos = [...videos, { id: videoId, url: newVideoUrl, added: new Date().toISOString() }];
+          const newVideos = [...videos, { id: videoId, title: 'Custom Video', category, added: new Date().toISOString() }];
           setVideos(newVideos);
           localStorage.setItem('videos', JSON.stringify(newVideos));
           setNewVideoUrl('');
         }
       };
+
+      const filteredVideos = videoCategory === 'all' ? videos : videos.filter(v => v.category === videoCategory);
 
       const removeVideo = (videoId) => {
         const newVideos = videos.filter(v => v.id !== videoId);
@@ -331,19 +361,11 @@
 
             {currentView === 'watch' && (
               <div className="space-y-4">
-                <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">ADD VIDEO</h2>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-red-950 border-2 border-red-800 rounded px-3 py-2 text-red-300 font-bold" />
-                    <button onClick={addVideo} className="px-4 py-2 bg-red-700 border-2 border-red-500 rounded font-black">+</button>
-                  </div>
-                </div>
-
                 {activeVideo && (
                   <div className="bg-black border-2 border-red-500 rounded p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h2 className="text-xl font-black text-red-400 uppercase">NOW PLAYING</h2>
-                      <button onClick={() => setActiveVideo(null)} className="text-red-500 font-black">✕</button>
+                      <button onClick={() => setActiveVideo(null)} className="text-red-500 font-black text-xl">✕</button>
                     </div>
                     <div className="aspect-video">
                       <iframe className="w-full h-full rounded" src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
@@ -351,23 +373,40 @@
                   </div>
                 )}
 
+                <div className="flex flex-wrap gap-2">
+                  {['all', 'philosophy', 'psychology', 'history', 'custom'].map(cat => (
+                    <button key={cat} onClick={() => setVideoCategory(cat)} className={`px-3 py-1 rounded font-black uppercase text-sm border-2 ${videoCategory === cat ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{cat}</button>
+                  ))}
+                </div>
+
                 <div className="bg-black border-2 border-red-900 rounded p-4">
-                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">MY PLAYLIST ({videos.length})</h2>
-                  {videos.length === 0 ? (
-                    <p className="text-red-600 italic">No videos yet. Add some YouTube links above!</p>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {videos.map(v => (
-                        <div key={v.id} className={`relative group cursor-pointer rounded overflow-hidden border-2 ${activeVideo === v.id ? 'border-red-500' : 'border-red-900'}`}>
-                          <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="thumbnail" className="w-full aspect-video object-cover" onClick={() => setActiveVideo(v.id)} />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" onClick={() => setActiveVideo(v.id)}>
-                            <span className="text-4xl">▶</span>
-                          </div>
-                          <button onClick={() => removeVideo(v.id)} className="absolute top-1 right-1 bg-black/80 text-red-500 rounded px-2 py-1 text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">VIDEO ESSAYS ({filteredVideos.length})</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {filteredVideos.map(v => (
+                      <div key={v.id} className={`relative group cursor-pointer rounded overflow-hidden border-2 ${activeVideo === v.id ? 'border-red-500' : 'border-red-900'}`} onClick={() => setActiveVideo(v.id)}>
+                        <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="thumbnail" className="w-full aspect-video object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <p className="text-xs font-bold text-white line-clamp-2">{v.title}</p>
+                          <span className="text-xs text-red-400 uppercase font-black">{v.category}</span>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-5xl">▶</span>
+                        </div>
+                        {v.category === 'custom' && (
+                          <button onClick={(e) => { e.stopPropagation(); removeVideo(v.id); }} className="absolute top-1 right-1 bg-black/80 text-red-500 rounded px-2 py-1 text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h2 className="text-lg font-black text-red-400 uppercase mb-3">ADD YOUR OWN</h2>
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-red-950 border-2 border-red-800 rounded px-3 py-2 text-red-300 font-bold" />
+                    <button onClick={() => addVideo()} className="px-4 py-2 bg-red-700 border-2 border-red-500 rounded font-black">+</button>
+                  </div>
                 </div>
               </div>
             )}
