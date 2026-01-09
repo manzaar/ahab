@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Call Me Ahab</title>
+  <title>Ahab</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
   <style>
     @keyframes yumPop {
       0% { opacity: 0; transform: scale(0.5); }
@@ -323,7 +324,7 @@
           <div className="max-w-lg mx-auto">
             {/* Header */}
             <div className="mb-6 text-center">
-              <h1 className="text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">CALL ME AHAB</h1>
+              <h1 className="text-4xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">AHAB</h1>
               <p className="text-red-600 text-xs font-bold tracking-[0.3em] mt-1">HUNT THE WHITE WHALE</p>
             </div>
 
@@ -356,18 +357,10 @@
             {/* HOME */}
             {currentView === 'home' && (
               <div className="space-y-4 animate-fade-in">
-                {/* Casio Digital Clock */}
-                <div className="bg-gradient-to-b from-neutral-800 to-neutral-900 rounded-2xl p-4 border border-neutral-700 shadow-inner">
-                  <div className="bg-[#1a2f1a] rounded-xl p-4 border-2 border-neutral-600 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
-                    <div className="text-center">
-                      <p className="text-[#3d5a3d] text-[10px] font-bold tracking-widest mb-1">CASIO</p>
-                      <div className="font-mono text-5xl font-bold text-[#7fff7f] tracking-wider" style={{textShadow: '0 0 10px rgba(127,255,127,0.5), 0 0 20px rgba(127,255,127,0.3)'}}>
-                        {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
-                      </div>
-                      <p className="text-[#5a8a5a] text-xs font-mono mt-1">
-                        {currentTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
-                      </p>
-                    </div>
+                {/* Digital Clock */}
+                <div className="text-center py-2">
+                  <div className="text-6xl font-bold text-red-500 tracking-wider" style={{fontFamily: 'Orbitron, monospace', textShadow: '0 0 20px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.3)'}}>
+                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace(' ', '')}
                   </div>
                 </div>
 
