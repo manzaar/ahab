@@ -23,7 +23,10 @@
       const [groceryChecked, setGroceryChecked] = useState({});
       const [workoutLog, setWorkoutLog] = useState({});
       const [selectedWorkout, setSelectedWorkout] = useState('push');
-      
+      const [quoteIndex, setQuoteIndex] = useState(0);
+      const [quoteFade, setQuoteFade] = useState(true);
+      const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
+
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       
       const animeQuotes = [
@@ -31,7 +34,22 @@
         { quote: "Give up on your dreams and die.", char: "Levi Ackerman" },
         { quote: "If you don't take risks, you can't create a future.", char: "Monkey D. Luffy" },
         { quote: "Push through the pain. Giving up hurts more.", char: "Vegeta" },
-        { quote: "The only thing we're allowed to do is believe that we won't regret the choice we made.", char: "Levi" }
+        { quote: "The only thing we're allowed to do is believe that we won't regret the choice we made.", char: "Levi" },
+        { quote: "A lesson without pain is meaningless.", char: "Edward Elric" },
+        { quote: "Hardships make us stronger.", char: "Natsu Dragneel" },
+        { quote: "I'll take a potato chip... and eat it!", char: "Light Yagami" },
+        { quote: "Believe in the me that believes in you!", char: "Kamina" },
+        { quote: "The moment you give up is the moment you let someone else win.", char: "Kino" },
+        { quote: "Strength is the only thing that matters in this world.", char: "Baki Hanma" },
+        { quote: "A dropout will beat a genius through hard work.", char: "Rock Lee" },
+        { quote: "Surpass your limits. Right here, right now.", char: "Yami Sukehiro" },
+        { quote: "If you can't do something, then don't. Focus on what you can.", char: "Shiroe" },
+        { quote: "The world isn't perfect. But it's there for us, doing the best it can.", char: "Roy Mustang" },
+        { quote: "I don't want to conquer anything. I just think the guy with the most freedom is the Pirate King.", char: "Monkey D. Luffy" },
+        { quote: "Fear is not evil. It tells you what your weakness is.", char: "Gildarts" },
+        { quote: "Being weak is nothing to be ashamed of. Staying weak is.", char: "Fuegoleon" },
+        { quote: "A real man never dies, even when he's killed!", char: "Kamina" },
+        { quote: "Power comes in response to a need, not a desire.", char: "Goku" }
       ];
       
       const getTodayString = () => {
@@ -39,7 +57,18 @@
         return dayNames[new Date().getDay()];
       };
 
-      const randomQuote = animeQuotes[Math.floor(Math.random() * animeQuotes.length)];
+      const currentQuote = animeQuotes[quoteIndex];
+
+      useEffect(() => {
+        const cycleQuotes = setInterval(() => {
+          setQuoteFade(false);
+          setTimeout(() => {
+            setQuoteIndex(prev => (prev + 1) % animeQuotes.length);
+            setQuoteFade(true);
+          }, 500);
+        }, 5000);
+        return () => clearInterval(cycleQuotes);
+      }, []);
 
       const meals = [
         { id: 'meal1', name: 'Breakfast', calories: 700, items: ['Eggs: 4 whole cooked', 'Oatmeal: 200g', 'Banana: 1', 'Berries: 100g'], macros: '42g pro, 70g carb, 28g fat' },
@@ -51,9 +80,9 @@
       const groceryWeekly = ['Eggs: 2 dozen', 'Chicken: 3 lbs', 'Beef: 3 lbs', 'Bananas: 7-8', 'Berries: 700g', 'Broccoli: 2 lbs', 'Vegetables: 3 lbs', 'Yogurt: 1400g'];
 
       const workouts = {
-        push: { name: 'Push', exercises: ['Shoulder Press', 'Incline Bench', 'Lateral Raises', 'Dips'] },
-        pull: { name: 'Pull', exercises: ['Pull-ups', 'Rows', 'Face Pulls', 'Curls'] },
-        legs: { name: 'Legs', exercises: ['Squats', 'RDLs', 'Leg Press', 'Leg Curls'] }
+        push: { name: 'Push', exercises: ['Bench Press', 'Shoulder Press', 'Incline Dumbbell Press', 'Lateral Raises', 'Tricep Pushdowns'] },
+        pull: { name: 'Pull', exercises: ['Pull-ups', 'Barbell Rows', 'Face Pulls', 'Bicep Curls', 'Lat Pulldowns'] },
+        legs: { name: 'Legs', exercises: ['Squats', 'Romanian Deadlifts', 'Leg Press', 'Leg Curls', 'Calf Raises'] }
       };
 
       useEffect(() => {
@@ -97,6 +126,33 @@
         localStorage.setItem('grocery', JSON.stringify(newChecked));
       };
 
+      const updateExerciseLog = (date, workoutType, exercise, field, value) => {
+        const newLog = { ...workoutLog };
+        if (!newLog[date]) newLog[date] = {};
+        if (!newLog[date][workoutType]) newLog[date][workoutType] = {};
+        if (!newLog[date][workoutType][exercise]) newLog[date][workoutType][exercise] = { weight: '', reps: '', sets: '' };
+        newLog[date][workoutType][exercise][field] = value;
+        setWorkoutLog(newLog);
+        localStorage.setItem('workouts', JSON.stringify(newLog));
+      };
+
+      const getExerciseData = (date, workoutType, exercise) => {
+        return workoutLog[date]?.[workoutType]?.[exercise] || { weight: '', reps: '', sets: '' };
+      };
+
+      const getWorkoutHistory = (workoutType, exercise) => {
+        const history = [];
+        Object.keys(workoutLog).sort().reverse().forEach(date => {
+          if (workoutLog[date]?.[workoutType]?.[exercise]) {
+            const data = workoutLog[date][workoutType][exercise];
+            if (data.weight || data.reps || data.sets) {
+              history.push({ date, ...data });
+            }
+          }
+        });
+        return history.slice(0, 5);
+      };
+
       const today = getTodayString();
       const todayData = weekData[today] || {};
       const progress = ((233 - parseFloat(currentWeight)) / 43) * 100;
@@ -108,8 +164,7 @@
               <h1 className="text-3xl font-black tracking-wider">CALL ME AHAB...</h1>
               <p className="text-red-400 font-bold">CURRENT: {currentWeight} LBS → TARGET: 190 LBS</p>
               <div className="mt-3 bg-gradient-to-r from-red-950/50 to-black border-l-4 border-red-600 p-3 rounded">
-                <p className="text-sm italic text-red-300">{randomQuote.quote}</p>
-                <p className="text-xs text-red-500 font-black mt-1 text-right">- {randomQuote.char}</p>
+                <p className={`text-sm italic text-red-300 transition-opacity duration-500 ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>"{currentQuote.quote}" <span className="text-red-500 font-black not-italic">— {currentQuote.char}</span></p>
               </div>
             </div>
 
@@ -164,6 +219,60 @@
                     <p className="text-sm text-red-400 font-bold">{m.macros}</p>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {currentView === 'workouts' && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2 mb-4 items-center">
+                  {Object.keys(workouts).map(w => (
+                    <button key={w} onClick={() => setSelectedWorkout(w)} className={`px-4 py-2 rounded font-black uppercase border-2 ${selectedWorkout === w ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{workouts[w].name}</button>
+                  ))}
+                  <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="ml-auto bg-red-950 border-2 border-red-800 rounded px-3 py-2 font-bold text-red-300" />
+                </div>
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h2 className="text-2xl font-black uppercase mb-4 text-red-400">{workouts[selectedWorkout].name} Day</h2>
+                  <div className="space-y-4">
+                    {workouts[selectedWorkout].exercises.map((ex, i) => {
+                      const exData = getExerciseData(workoutDate, selectedWorkout, ex);
+                      const history = getWorkoutHistory(selectedWorkout, ex);
+                      return (
+                        <div key={i} className="p-4 bg-red-950/30 border border-red-900 rounded">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-red-500 font-black text-lg">{i + 1}</span>
+                            <span className="text-red-300 font-bold text-lg">{ex}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 mb-3">
+                            <div>
+                              <label className="text-xs text-red-500 font-bold">WEIGHT</label>
+                              <input type="number" placeholder="lbs" value={exData.weight} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, 'weight', e.target.value)} className="w-full bg-black border-2 border-red-800 rounded px-2 py-1 text-red-300 font-bold" />
+                            </div>
+                            <div>
+                              <label className="text-xs text-red-500 font-bold">SETS</label>
+                              <input type="number" placeholder="sets" value={exData.sets} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, 'sets', e.target.value)} className="w-full bg-black border-2 border-red-800 rounded px-2 py-1 text-red-300 font-bold" />
+                            </div>
+                            <div>
+                              <label className="text-xs text-red-500 font-bold">REPS</label>
+                              <input type="number" placeholder="reps" value={exData.reps} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, 'reps', e.target.value)} className="w-full bg-black border-2 border-red-800 rounded px-2 py-1 text-red-300 font-bold" />
+                            </div>
+                          </div>
+                          {history.length > 0 && (
+                            <div className="border-t border-red-900 pt-2 mt-2">
+                              <p className="text-xs text-red-600 font-bold mb-1">HISTORY</p>
+                              <div className="flex flex-wrap gap-2">
+                                {history.map((h, hi) => (
+                                  <span key={hi} className="text-xs bg-black border border-red-900 rounded px-2 py-1 text-red-400">
+                                    {h.date}: {h.weight}lbs × {h.sets}×{h.reps}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             )}
 
