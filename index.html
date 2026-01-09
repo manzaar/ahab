@@ -26,6 +26,9 @@
       const [quoteIndex, setQuoteIndex] = useState(0);
       const [quoteFade, setQuoteFade] = useState(true);
       const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
+      const [videos, setVideos] = useState([]);
+      const [newVideoUrl, setNewVideoUrl] = useState('');
+      const [activeVideo, setActiveVideo] = useState(null);
 
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       
@@ -99,6 +102,8 @@
         if (g) setGroceryChecked(JSON.parse(g));
         const wl = localStorage.getItem('workouts');
         if (wl) setWorkoutLog(JSON.parse(wl));
+        const vids = localStorage.getItem('videos');
+        if (vids) setVideos(JSON.parse(vids));
       }, []);
 
       const toggleMeal = (day, meal) => {
@@ -153,6 +158,28 @@
         return history.slice(0, 5);
       };
 
+      const getYouTubeId = (url) => {
+        const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+        return match ? match[1] : null;
+      };
+
+      const addVideo = () => {
+        const videoId = getYouTubeId(newVideoUrl);
+        if (videoId && !videos.find(v => v.id === videoId)) {
+          const newVideos = [...videos, { id: videoId, url: newVideoUrl, added: new Date().toISOString() }];
+          setVideos(newVideos);
+          localStorage.setItem('videos', JSON.stringify(newVideos));
+          setNewVideoUrl('');
+        }
+      };
+
+      const removeVideo = (videoId) => {
+        const newVideos = videos.filter(v => v.id !== videoId);
+        setVideos(newVideos);
+        localStorage.setItem('videos', JSON.stringify(newVideos));
+        if (activeVideo === videoId) setActiveVideo(null);
+      };
+
       const today = getTodayString();
       const todayData = weekData[today] || {};
       const progress = ((233 - parseFloat(currentWeight)) / 43) * 100;
@@ -176,7 +203,7 @@
             </div>
 
             <div className="flex gap-2 mb-6 overflow-x-auto">
-              {['home', 'meals', 'workouts', 'grocery'].map(v => (
+              {['home', 'meals', 'workouts', 'grocery', 'watch'].map(v => (
                 <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded font-black uppercase border-2 ${currentView === v ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{v}</button>
               ))}
             </div>
@@ -298,6 +325,49 @@
                       </button>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {currentView === 'watch' && (
+              <div className="space-y-4">
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">ADD VIDEO</h2>
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-red-950 border-2 border-red-800 rounded px-3 py-2 text-red-300 font-bold" />
+                    <button onClick={addVideo} className="px-4 py-2 bg-red-700 border-2 border-red-500 rounded font-black">+</button>
+                  </div>
+                </div>
+
+                {activeVideo && (
+                  <div className="bg-black border-2 border-red-500 rounded p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h2 className="text-xl font-black text-red-400 uppercase">NOW PLAYING</h2>
+                      <button onClick={() => setActiveVideo(null)} className="text-red-500 font-black">✕</button>
+                    </div>
+                    <div className="aspect-video">
+                      <iframe className="w-full h-full rounded" src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h2 className="text-xl font-black text-red-400 uppercase mb-3">MY PLAYLIST ({videos.length})</h2>
+                  {videos.length === 0 ? (
+                    <p className="text-red-600 italic">No videos yet. Add some YouTube links above!</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      {videos.map(v => (
+                        <div key={v.id} className={`relative group cursor-pointer rounded overflow-hidden border-2 ${activeVideo === v.id ? 'border-red-500' : 'border-red-900'}`}>
+                          <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="thumbnail" className="w-full aspect-video object-cover" onClick={() => setActiveVideo(v.id)} />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" onClick={() => setActiveVideo(v.id)}>
+                            <span className="text-4xl">▶</span>
+                          </div>
+                          <button onClick={() => removeVideo(v.id)} className="absolute top-1 right-1 bg-black/80 text-red-500 rounded px-2 py-1 text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
