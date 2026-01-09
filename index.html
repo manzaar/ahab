@@ -52,6 +52,9 @@
       const [newVideoUrl, setNewVideoUrl] = useState('');
       const [activeVideo, setActiveVideo] = useState(null);
       const [videoCategory, setVideoCategory] = useState('all');
+      const [timerSeconds, setTimerSeconds] = useState(90);
+      const [timerRunning, setTimerRunning] = useState(false);
+      const [timerMode, setTimerMode] = useState('rest');
 
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       
@@ -203,6 +206,100 @@
 
       const filteredVideos = videoCategory === 'all' ? videos : videos.filter(v => v.category === videoCategory);
 
+      // Timer effect
+      useEffect(() => {
+        let interval;
+        if (timerRunning && timerSeconds > 0) {
+          interval = setInterval(() => setTimerSeconds(s => s - 1), 1000);
+        } else if (timerSeconds === 0) {
+          setTimerRunning(false);
+          if (typeof Audio !== 'undefined') {
+            try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp+dnZygo6esnZGJgoiTpLrK0M/GurCsq7C5x9PZ2NDCsJ+Uk5Wgr8HS3+DYyru0tbvG1eHo5t3OvrCpqKyzvczc5Obi2My/tK+usMHR4Ojp4dXJvrSur7fE1eDn6OHWyL2zrrC4x9Xg5+fi2cvAtrGxtMDS3+fp5drNwba0trnH1uDo6eTdz8O5tbW4wtTg6Orl4dPIvrm3usPV4ejr5+LWzMK8urrD1+Hq7ejk2tDGwLy8wcnZ4+vs6OXc08nDwL/Ey9rk7O3p5t3Vy8fExMjO2+Tu7uro4NjQy8jHyc/d5e7v7Orn4drTzsvKzNTf5+/w7uvn4t3X0s/O0Nfh6fDx7+3q5uHc2NTS0dPa4+vy8vDu6+fj39vX1dTW3OTq8vPx7+zp5ODb19XV1tvi6fHz8vDt6ubj39zY1tbY3+Xr8/Ty8O3q5+Tf3NnY19rf5Ovz9PPx7uro5ODd2tnZ2t/l6/P09PH').play(); } catch(e) {}
+          }
+        }
+        return () => clearInterval(interval);
+      }, [timerRunning, timerSeconds]);
+
+      const formatTime = (secs) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+      };
+
+      const timerPresets = {
+        rest: [30, 60, 90, 120, 180],
+        hiit: [20, 30, 45, 60]
+      };
+
+      // Stats calculations
+      const getTimeGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'GOOD MORNING';
+        if (hour < 17) return 'GOOD AFTERNOON';
+        if (hour < 21) return 'GOOD EVENING';
+        return 'LATE NIGHT GRIND';
+      };
+
+      const getWeeklyStats = () => {
+        let mealsHit = 0, totalMeals = 0, workoutsHit = 0, waterTotal = 0;
+        days.forEach(d => {
+          if (weekData[d]) {
+            if (weekData[d].meal1) mealsHit++;
+            if (weekData[d].meal2) mealsHit++;
+            if (weekData[d].meal3) mealsHit++;
+            totalMeals += 3;
+            if (weekData[d].training) workoutsHit++;
+            waterTotal += weekData[d].water || 0;
+          }
+        });
+        const consistency = totalMeals > 0 ? Math.round((mealsHit / totalMeals) * 100) : 0;
+        return { mealsHit, workoutsHit, consistency, waterTotal };
+      };
+
+      const getStreak = () => {
+        let streak = 0;
+        const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const todayIdx = new Date().getDay();
+        for (let i = 0; i <= todayIdx; i++) {
+          const d = dayOrder[i];
+          if (weekData[d] && (weekData[d].meal1 || weekData[d].meal2 || weekData[d].meal3 || weekData[d].training)) {
+            streak++;
+          }
+        }
+        return streak;
+      };
+
+      const getWeightTrend = () => {
+        const weights = [];
+        Object.keys(workoutLog).sort().forEach(date => {
+          Object.keys(workoutLog[date] || {}).forEach(wType => {
+            Object.keys(workoutLog[date][wType] || {}).forEach(ex => {
+              const w = workoutLog[date][wType][ex]?.weight;
+              if (w) weights.push({ date, weight: parseFloat(w), exercise: ex });
+            });
+          });
+        });
+        return weights;
+      };
+
+      const getNextWorkout = () => {
+        const rotation = ['push', 'pull', 'legs'];
+        const lastWorkouts = [];
+        Object.keys(workoutLog).sort().reverse().slice(0, 3).forEach(date => {
+          Object.keys(workoutLog[date] || {}).forEach(wType => {
+            if (!lastWorkouts.includes(wType)) lastWorkouts.push(wType);
+          });
+        });
+        if (lastWorkouts.length === 0) return 'push';
+        const lastIdx = rotation.indexOf(lastWorkouts[0]);
+        return rotation[(lastIdx + 1) % 3];
+      };
+
+      const weeklyStats = getWeeklyStats();
+      const streak = getStreak();
+      const nextWorkout = getNextWorkout();
+      const lbsLost = Math.max(0, 233 - parseFloat(currentWeight || 233)).toFixed(1);
+
       const removeVideo = (videoId) => {
         const newVideos = videos.filter(v => v.id !== videoId);
         setVideos(newVideos);
@@ -232,32 +329,106 @@
               <p className="text-sm text-red-300 text-center font-bold">{progress.toFixed(1)}% CONQUERED</p>
             </div>
 
-            <div className="flex gap-2 mb-6 overflow-x-auto">
-              {['home', 'meals', 'workouts', 'grocery', 'watch'].map(v => (
-                <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded font-black uppercase border-2 ${currentView === v ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{v}</button>
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+              {['home', 'meals', 'workouts', 'timer', 'grocery', 'watch'].map(v => (
+                <button key={v} onClick={() => setCurrentView(v)} className={`px-3 py-2 rounded font-black uppercase border-2 text-sm whitespace-nowrap ${currentView === v ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>{v}</button>
               ))}
             </div>
 
             {currentView === 'home' && (
-              <div className="bg-black border-2 border-red-900 rounded p-4">
-                <h2 className="text-2xl font-black mb-4 uppercase">TODAY - {today}</h2>
-                <div className="mb-4">
-                  <input type="number" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="w-24 bg-red-950 border-2 border-red-800 rounded px-3 py-2 font-black text-red-300" />
+              <div className="space-y-4">
+                {/* Greeting & Streak */}
+                <div className="bg-gradient-to-r from-red-950 to-black border-2 border-red-700 rounded p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-red-500 text-sm font-bold">{getTimeGreeting()}</p>
+                      <h2 className="text-2xl font-black uppercase">WARRIOR</h2>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="text-3xl">🔥</span>
+                        <span className="text-3xl font-black text-orange-500">{streak}</span>
+                      </div>
+                      <p className="text-xs text-red-400 font-bold">DAY STREAK</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="mb-4 flex gap-1">
-                  {[1,2,3,4,5,6,7,8].map(n => (
-                    <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`w-9 h-9 rounded-full text-sm font-black border-2 ${(todayData.water || 0) >= n ? 'bg-blue-700 border-blue-500' : 'bg-black text-red-800 border-red-900'}`}>{n}</button>
-                  ))}
-                </div>
+
+                {/* Stats Dashboard */}
                 <div className="grid grid-cols-2 gap-3">
-                  {['meal1', 'meal2', 'meal3'].map(m => (
-                    <button key={m} onClick={() => toggleMeal(today, m)} className={`flex flex-col items-center p-4 rounded border-2 ${todayData[m] ? 'bg-red-800 border-red-600' : 'bg-black text-red-400 border-red-900'}`}>
-                      <span className="font-black uppercase">{m.replace('meal', 'M')}</span>
+                  <div className="bg-black border-2 border-red-900 rounded p-3 text-center">
+                    <p className="text-2xl font-black text-red-400">{lbsLost}</p>
+                    <p className="text-xs text-red-600 font-bold">LBS LOST</p>
+                  </div>
+                  <div className="bg-black border-2 border-red-900 rounded p-3 text-center">
+                    <p className="text-2xl font-black text-red-400">{weeklyStats.workoutsHit}/7</p>
+                    <p className="text-xs text-red-600 font-bold">WORKOUTS</p>
+                  </div>
+                  <div className="bg-black border-2 border-red-900 rounded p-3 text-center">
+                    <p className="text-2xl font-black text-red-400">{weeklyStats.consistency}%</p>
+                    <p className="text-xs text-red-600 font-bold">MEAL CONSISTENCY</p>
+                  </div>
+                  <div className="bg-black border-2 border-blue-900 rounded p-3 text-center">
+                    <p className="text-2xl font-black text-blue-400">{weeklyStats.waterTotal}</p>
+                    <p className="text-xs text-blue-600 font-bold">GLASSES H2O</p>
+                  </div>
+                </div>
+
+                {/* Next Workout Suggestion */}
+                <div className="bg-gradient-to-r from-orange-950/50 to-black border-2 border-orange-700 rounded p-4 cursor-pointer" onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-orange-500 font-bold">NEXT UP</p>
+                      <p className="text-xl font-black text-orange-400 uppercase">{workouts[nextWorkout].name} DAY</p>
+                    </div>
+                    <span className="text-2xl">→</span>
+                  </div>
+                </div>
+
+                {/* Today's Tracking */}
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h3 className="text-lg font-black mb-3 uppercase text-red-400">{today}'s LOG</h3>
+
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-red-500 font-bold text-sm">WEIGHT</span>
+                    <input type="number" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="w-24 bg-red-950 border-2 border-red-800 rounded px-3 py-2 font-black text-red-300" />
+                    <span className="text-red-400 font-bold">{currentWeight} LBS</span>
+                  </div>
+
+                  <div className="mb-4">
+                    <span className="text-blue-500 font-bold text-sm block mb-2">WATER</span>
+                    <div className="flex gap-1">
+                      {[1,2,3,4,5,6,7,8].map(n => (
+                        <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`w-9 h-9 rounded-full text-sm font-black border-2 ${(todayData.water || 0) >= n ? 'bg-blue-700 border-blue-500' : 'bg-black text-blue-900 border-blue-900'}`}>{n}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    {['meal1', 'meal2', 'meal3'].map(m => (
+                      <button key={m} onClick={() => toggleMeal(today, m)} className={`flex flex-col items-center p-3 rounded border-2 ${todayData[m] ? 'bg-red-800 border-red-600' : 'bg-black text-red-400 border-red-900'}`}>
+                        <span className="font-black text-sm">{m.replace('meal', 'M')}</span>
+                      </button>
+                    ))}
+                    <button onClick={() => toggleMeal(today, 'training')} className={`flex flex-col items-center p-3 rounded border-2 ${todayData.training ? 'bg-orange-700 border-orange-500' : 'bg-black text-orange-400 border-orange-900'}`}>
+                      <span className="font-black text-sm">GYM</span>
                     </button>
-                  ))}
-                  <button onClick={() => toggleMeal(today, 'training')} className={`flex flex-col items-center p-4 rounded border-2 ${todayData.training ? 'bg-red-800 border-red-600' : 'bg-black text-red-400 border-red-900'}`}>
-                    <span className="font-black uppercase">TRAIN</span>
-                  </button>
+                  </div>
+                </div>
+
+                {/* Milestones */}
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h3 className="text-sm font-black mb-3 uppercase text-red-500">MILESTONES</h3>
+                  <div className="flex justify-between text-xs">
+                    {[10, 25, 50, 75, 100].map(m => (
+                      <div key={m} className={`text-center ${progress >= m ? 'text-red-400' : 'text-red-900'}`}>
+                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-black mb-1 ${progress >= m ? 'bg-red-700 border-red-500' : 'border-red-900'}`}>
+                          {progress >= m ? '✓' : m}
+                        </div>
+                        <span>{m}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -329,6 +500,66 @@
                       );
                     })}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {currentView === 'timer' && (
+              <div className="space-y-4">
+                {/* Timer Display */}
+                <div className="bg-black border-2 border-red-900 rounded p-6 text-center">
+                  <div className={`text-7xl font-black mb-4 ${timerSeconds <= 10 && timerSeconds > 0 ? 'text-red-500 animate-pulse' : 'text-red-400'}`}>
+                    {formatTime(timerSeconds)}
+                  </div>
+                  <div className="flex justify-center gap-3">
+                    <button onClick={() => setTimerRunning(!timerRunning)} className={`px-8 py-3 rounded font-black uppercase border-2 text-lg ${timerRunning ? 'bg-yellow-700 border-yellow-500' : 'bg-green-700 border-green-500'}`}>
+                      {timerRunning ? 'PAUSE' : 'START'}
+                    </button>
+                    <button onClick={() => { setTimerRunning(false); setTimerSeconds(timerMode === 'rest' ? 90 : 30); }} className="px-6 py-3 bg-black border-2 border-red-900 rounded font-black uppercase text-lg text-red-400">
+                      RESET
+                    </button>
+                  </div>
+                </div>
+
+                {/* Timer Mode */}
+                <div className="flex gap-2">
+                  <button onClick={() => { setTimerMode('rest'); setTimerSeconds(90); setTimerRunning(false); }} className={`flex-1 py-3 rounded font-black uppercase border-2 ${timerMode === 'rest' ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>
+                    REST TIMER
+                  </button>
+                  <button onClick={() => { setTimerMode('hiit'); setTimerSeconds(30); setTimerRunning(false); }} className={`flex-1 py-3 rounded font-black uppercase border-2 ${timerMode === 'hiit' ? 'bg-orange-700 border-orange-500' : 'bg-black text-orange-400 border-orange-900'}`}>
+                    HIIT
+                  </button>
+                </div>
+
+                {/* Presets */}
+                <div className="bg-black border-2 border-red-900 rounded p-4">
+                  <h3 className="text-sm font-black text-red-500 uppercase mb-3">QUICK SET</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {timerPresets[timerMode].map(secs => (
+                      <button key={secs} onClick={() => { setTimerSeconds(secs); setTimerRunning(false); }} className={`px-4 py-2 rounded font-black border-2 ${timerSeconds === secs && !timerRunning ? 'bg-red-700 border-red-500' : 'bg-black text-red-400 border-red-900'}`}>
+                        {formatTime(secs)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tips */}
+                <div className="bg-gradient-to-r from-red-950/50 to-black border-l-4 border-red-600 p-4 rounded">
+                  {timerMode === 'rest' ? (
+                    <div>
+                      <p className="text-red-400 font-bold text-sm">REST TIMER TIPS</p>
+                      <p className="text-red-300 text-xs mt-1">• Strength: 2-3 min rest</p>
+                      <p className="text-red-300 text-xs">• Hypertrophy: 60-90 sec rest</p>
+                      <p className="text-red-300 text-xs">• Endurance: 30-60 sec rest</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-orange-400 font-bold text-sm">HIIT TIPS</p>
+                      <p className="text-orange-300 text-xs mt-1">• Work:Rest ratio 1:2 for beginners</p>
+                      <p className="text-orange-300 text-xs">• Work:Rest ratio 1:1 for advanced</p>
+                      <p className="text-orange-300 text-xs">• 20-30 sec bursts, max effort</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
