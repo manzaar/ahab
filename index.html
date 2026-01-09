@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ahab - Your Fitness Journey</title>
+  <title>Call Me Ahab</title>
   <style>
     @keyframes yumPop {
       0% { opacity: 0; transform: scale(0.5); }
@@ -19,25 +19,17 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
-    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(220, 38, 38, 0.5); }
+    }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    .glow { animation: glow 2s infinite; }
   </style>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            dark: { 50: '#f8fafc', 100: '#1e293b', 200: '#1a2332', 300: '#151c28', 400: '#0f1419', 500: '#0a0e13' },
-            accent: { light: '#6ee7b7', DEFAULT: '#10b981', dark: '#059669' }
-          }
-        }
-      }
-    }
-  </script>
 </head>
 <body>
   <div id="root"></div>
@@ -83,22 +75,27 @@
 
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-      const quotes = [
-        { quote: "The only way to do great work is to love what you do.", char: "Steve Jobs" },
-        { quote: "Success is not final, failure is not fatal.", char: "Winston Churchill" },
-        { quote: "The body achieves what the mind believes.", char: "Napoleon Hill" },
-        { quote: "Push through the pain. Giving up hurts more.", char: "Anonymous" },
-        { quote: "Strength does not come from physical capacity. It comes from an indomitable will.", char: "Gandhi" },
+      const animeQuotes = [
+        { quote: "I am the hope of the universe. I am the answer to all living things that cry out for peace!", char: "Goku" },
+        { quote: "Give up on your dreams and die.", char: "Levi Ackerman" },
+        { quote: "If you don't take risks, you can't create a future.", char: "Monkey D. Luffy" },
+        { quote: "Push through the pain. Giving up hurts more.", char: "Vegeta" },
+        { quote: "The only thing we're allowed to do is believe that we won't regret the choice we made.", char: "Levi" },
         { quote: "A lesson without pain is meaningless.", char: "Edward Elric" },
-        { quote: "The only person you are destined to become is the person you decide to be.", char: "Emerson" },
+        { quote: "Hardships make us stronger.", char: "Natsu Dragneel" },
         { quote: "Believe in the me that believes in you!", char: "Kamina" },
-        { quote: "Your body can stand almost anything. It's your mind you have to convince.", char: "Unknown" },
+        { quote: "The moment you give up is the moment you let someone else win.", char: "Kino" },
+        { quote: "Strength is the only thing that matters in this world.", char: "Baki Hanma" },
         { quote: "A dropout will beat a genius through hard work.", char: "Rock Lee" },
         { quote: "Surpass your limits. Right here, right now.", char: "Yami Sukehiro" },
         { quote: "The world isn't perfect. But it's there for us, doing the best it can.", char: "Roy Mustang" },
+        { quote: "Fear is not evil. It tells you what your weakness is.", char: "Gildarts" },
+        { quote: "Being weak is nothing to be ashamed of. Staying weak is.", char: "Fuegoleon" },
+        { quote: "A real man never dies, even when he's killed!", char: "Kamina" },
+        { quote: "Power comes in response to a need, not a desire.", char: "Goku" }
       ];
 
-      const currentQuote = quotes[quoteIndex];
+      const currentQuote = animeQuotes[quoteIndex];
 
       const getTodayString = () => {
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -108,8 +105,8 @@
       useEffect(() => {
         const cycleQuotes = setInterval(() => {
           setQuoteFade(false);
-          setTimeout(() => { setQuoteIndex(prev => (prev + 1) % quotes.length); setQuoteFade(true); }, 500);
-        }, 6000);
+          setTimeout(() => { setQuoteIndex(prev => (prev + 1) % animeQuotes.length); setQuoteFade(true); }, 500);
+        }, 5000);
         return () => clearInterval(cycleQuotes);
       }, []);
 
@@ -201,10 +198,10 @@
 
       const getTimeGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Good morning';
-        if (hour < 17) return 'Good afternoon';
-        if (hour < 21) return 'Good evening';
-        return 'Late night grind';
+        if (hour < 12) return 'GOOD MORNING';
+        if (hour < 17) return 'GOOD AFTERNOON';
+        if (hour < 21) return 'GOOD EVENING';
+        return 'LATE NIGHT GRIND';
       };
 
       const getWeeklyStats = () => {
@@ -258,53 +255,47 @@
       const nextWorkout = getNextWorkout();
       const lbsLost = Math.max(0, 233 - parseFloat(currentWeight || 233)).toFixed(1);
 
-      const Card = ({ children, className = '', onClick }) => (
-        <div onClick={onClick} className={`bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border border-slate-700/50 transition-all duration-300 ${onClick ? 'cursor-pointer hover:bg-slate-800/70 hover:border-slate-600/50' : ''} ${className}`}>
+      const Card = ({ children, className = '', onClick, glow }) => (
+        <div onClick={onClick} className={`bg-gradient-to-br from-neutral-900 to-black rounded-2xl p-5 border border-red-900/30 transition-all duration-300 ${onClick ? 'cursor-pointer hover:border-red-700/50 hover:from-neutral-800' : ''} ${glow ? 'glow' : ''} ${className}`}>
           {children}
         </div>
       );
 
-      const Button = ({ children, active, color = 'emerald', onClick, className = '' }) => (
-        <button onClick={onClick} className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${active ? `bg-${color}-500/20 text-${color}-400 border border-${color}-500/30` : 'bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:bg-slate-700/50'} ${className}`}>
-          {children}
-        </button>
-      );
-
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-4 pb-24">
+        <div className="min-h-screen bg-black text-white p-4 pb-24">
           <div className="max-w-lg mx-auto">
             {/* Header */}
             <div className="mb-6 text-center">
-              <h1 className="text-2xl font-light tracking-widest text-slate-300 mb-1">AHAB</h1>
-              <div className="flex items-center justify-center gap-2 text-emerald-400">
-                <span className="text-lg font-semibold">{currentWeight}</span>
-                <span className="text-slate-500">→</span>
-                <span className="text-lg font-semibold">190 lbs</span>
+              <h1 className="text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-700">CALL ME AHAB</h1>
+              <div className="flex items-center justify-center gap-3 mt-2">
+                <span className="text-xl font-bold text-red-400">{currentWeight}</span>
+                <span className="text-red-700">→</span>
+                <span className="text-xl font-bold text-red-400">190 LBS</span>
               </div>
             </div>
 
             {/* Progress Bar */}
-            <Card className="mb-6">
+            <Card className="mb-5" glow>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-slate-400">Progress</span>
-                <span className="text-emerald-400 font-medium">{progress.toFixed(1)}%</span>
+                <span className="text-red-400 font-bold uppercase tracking-wide">Progress</span>
+                <span className="text-red-500 font-black">{progress.toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-slate-700/50 rounded-full h-2">
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-500" style={{ width: `${Math.min(progress, 100)}%` }} />
+              <div className="w-full bg-red-950/50 rounded-full h-3 overflow-hidden">
+                <div className="bg-gradient-to-r from-red-700 via-red-500 to-orange-500 h-3 rounded-full transition-all duration-500" style={{ width: `${Math.min(progress, 100)}%` }} />
               </div>
             </Card>
 
             {/* Quote */}
-            <div className={`mb-6 transition-opacity duration-500 ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
-              <p className="text-slate-400 text-sm italic text-center">"{currentQuote.quote}"</p>
-              <p className="text-slate-500 text-xs text-center mt-1">— {currentQuote.char}</p>
+            <div className={`mb-5 px-4 py-3 bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-red-600 rounded-r-xl transition-opacity duration-500 ${quoteFade ? 'opacity-100' : 'opacity-0'}`}>
+              <p className="text-red-300 text-sm italic">"{currentQuote.quote}"</p>
+              <p className="text-red-500 text-xs font-bold mt-1">— {currentQuote.char}</p>
             </div>
 
             {/* Navigation */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
               {['home', 'meals', 'workouts', 'timer', 'grocery', 'watch'].map(v => (
-                <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300 ${currentView === v ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:bg-slate-700/50'}`}>
-                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                <button key={v} onClick={() => setCurrentView(v)} className={`px-4 py-2 rounded-xl text-sm font-bold uppercase whitespace-nowrap transition-all duration-300 ${currentView === v ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'bg-neutral-900 text-red-400 border border-red-900/30 hover:bg-neutral-800'}`}>
+                  {v}
                 </button>
               ))}
             </div>
@@ -312,70 +303,73 @@
             {/* HOME */}
             {currentView === 'home' && (
               <div className="space-y-4 animate-fade-in">
-                <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border-emerald-500/20">
+                <Card className="bg-gradient-to-br from-red-950/50 to-black border-red-700/30">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-slate-400 text-sm">{getTimeGreeting()}</p>
-                      <h2 className="text-xl font-semibold text-white">Ready to conquer?</h2>
+                      <p className="text-red-500 text-xs font-bold tracking-wider">{getTimeGreeting()}</p>
+                      <h2 className="text-2xl font-black text-white">WARRIOR</h2>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-orange-400">{streak}</div>
-                      <p className="text-xs text-slate-500">day streak</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl">🔥</span>
+                        <span className="text-4xl font-black text-orange-500">{streak}</span>
+                      </div>
+                      <p className="text-xs text-red-500 font-bold">DAY STREAK</p>
                     </div>
                   </div>
                 </Card>
 
                 <div className="grid grid-cols-2 gap-3">
                   <Card>
-                    <p className="text-2xl font-bold text-emerald-400">{lbsLost}</p>
-                    <p className="text-xs text-slate-500">lbs lost</p>
+                    <p className="text-3xl font-black text-red-500">{lbsLost}</p>
+                    <p className="text-xs text-red-400/70 font-bold uppercase">LBS LOST</p>
                   </Card>
                   <Card>
-                    <p className="text-2xl font-bold text-emerald-400">{weeklyStats.workoutsHit}/7</p>
-                    <p className="text-xs text-slate-500">workouts</p>
+                    <p className="text-3xl font-black text-red-500">{weeklyStats.workoutsHit}/7</p>
+                    <p className="text-xs text-red-400/70 font-bold uppercase">WORKOUTS</p>
                   </Card>
                   <Card>
-                    <p className="text-2xl font-bold text-emerald-400">{weeklyStats.consistency}%</p>
-                    <p className="text-xs text-slate-500">meal consistency</p>
+                    <p className="text-3xl font-black text-red-500">{weeklyStats.consistency}%</p>
+                    <p className="text-xs text-red-400/70 font-bold uppercase">CONSISTENCY</p>
                   </Card>
                   <Card>
-                    <p className="text-2xl font-bold text-sky-400">{weeklyStats.waterTotal}</p>
-                    <p className="text-xs text-slate-500">glasses water</p>
+                    <p className="text-3xl font-black text-blue-400">{weeklyStats.waterTotal}</p>
+                    <p className="text-xs text-blue-400/70 font-bold uppercase">WATER</p>
                   </Card>
                 </div>
 
-                <Card onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }} className="bg-gradient-to-r from-orange-500/10 to-amber-500/5 border-orange-500/20">
+                <Card onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }} className="bg-gradient-to-r from-orange-950/50 to-black border-orange-700/30">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wide">Next workout</p>
-                      <p className="text-lg font-semibold text-orange-400">{workouts[nextWorkout].name} Day</p>
+                      <p className="text-xs text-orange-500 font-bold tracking-wider">NEXT UP</p>
+                      <p className="text-xl font-black text-orange-400">{workouts[nextWorkout].name.toUpperCase()} DAY</p>
                     </div>
-                    <span className="text-slate-500 text-xl">→</span>
+                    <span className="text-orange-500 text-2xl">→</span>
                   </div>
                 </Card>
 
                 <Card>
-                  <h3 className="text-sm font-medium text-slate-400 mb-4">{today}'s Log</h3>
+                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-4">{today}'s Log</h3>
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-slate-500 text-sm w-16">Weight</span>
-                    <input type="number" placeholder="lbs" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="flex-1 bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                    <span className="text-red-400 text-sm font-bold w-20">WEIGHT</span>
+                    <input type="number" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors" />
                   </div>
                   <div className="mb-4">
-                    <span className="text-slate-500 text-sm block mb-2">Water intake</span>
+                    <span className="text-blue-400 text-sm font-bold block mb-2">WATER</span>
                     <div className="flex gap-1">
                       {[1,2,3,4,5,6,7,8].map(n => (
-                        <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`flex-1 h-10 rounded-xl text-sm font-medium transition-all duration-300 ${(todayData.water || 0) >= n ? 'bg-sky-500/30 text-sky-400 border border-sky-500/30' : 'bg-slate-700/30 text-slate-600 border border-slate-700/30'}`}>{n}</button>
+                        <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`flex-1 h-10 rounded-xl text-sm font-bold transition-all duration-300 ${(todayData.water || 0) >= n ? 'bg-blue-600 text-white' : 'bg-neutral-900 text-blue-900 border border-blue-900/30'}`}>{n}</button>
                       ))}
                     </div>
                   </div>
                   <div className="grid grid-cols-4 gap-2">
                     {['meal1', 'meal2', 'meal3'].map((m, i) => (
-                      <button key={m} onClick={() => toggleMeal(today, m)} className={`py-3 rounded-xl text-sm font-medium transition-all duration-300 ${todayData[m] ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700/30 text-slate-500 border border-slate-700/30'}`}>
+                      <button key={m} onClick={() => toggleMeal(today, m)} className={`py-3 rounded-xl text-sm font-bold transition-all duration-300 ${todayData[m] ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-700 border border-red-900/30'}`}>
                         M{i + 1}
                       </button>
                     ))}
-                    <button onClick={() => toggleMeal(today, 'training')} className={`py-3 rounded-xl text-sm font-medium transition-all duration-300 ${todayData.training ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-slate-700/30 text-slate-500 border border-slate-700/30'}`}>
-                      Gym
+                    <button onClick={() => toggleMeal(today, 'training')} className={`py-3 rounded-xl text-sm font-bold transition-all duration-300 ${todayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-900 text-orange-700 border border-orange-900/30'}`}>
+                      GYM
                     </button>
                   </div>
                 </Card>
@@ -383,7 +377,7 @@
                 <div className="flex justify-between px-2">
                   {[10, 25, 50, 75, 100].map(m => (
                     <div key={m} className="text-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${progress >= m ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-600 border border-slate-700/30'}`}>
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${progress >= m ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-900 border border-red-900/30'}`}>
                         {progress >= m ? '✓' : `${m}%`}
                       </div>
                     </div>
@@ -397,62 +391,62 @@
               <div className="space-y-4 animate-fade-in relative">
                 {showYum && (
                   <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
-                    <div className="text-5xl font-bold text-emerald-400" style={{animation: 'yumPop 1s ease-out forwards'}}>Delicious!</div>
+                    <div className="text-5xl font-black text-green-400" style={{animation: 'yumPop 1s ease-out forwards'}}>YUM! 🔥</div>
                   </div>
                 )}
 
-                <Card className="bg-gradient-to-r from-emerald-500/10 to-teal-500/5 border-emerald-500/20">
+                <Card className="bg-gradient-to-r from-red-950/50 to-black border-red-700/30">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wide">Today's fuel</p>
-                      <p className="text-2xl font-bold text-white">
+                      <p className="text-xs text-red-500 font-bold tracking-wider">TODAY'S FUEL</p>
+                      <p className="text-2xl font-black text-white">
                         {(todayData.meal1 ? 700 : 0) + (todayData.meal2 ? 700 : 0) + (todayData.meal3 ? 700 : 0)}
-                        <span className="text-slate-500 text-lg font-normal"> / 2100 cal</span>
+                        <span className="text-red-600 text-lg"> / 2100 CALS</span>
                       </p>
                     </div>
                     <div className="flex gap-1">
                       {['meal1', 'meal2', 'meal3'].map(m => (
-                        <div key={m} className={`w-3 h-3 rounded-full transition-colors duration-300 ${todayData[m] ? 'bg-emerald-400' : 'bg-slate-700'}`}></div>
+                        <div key={m} className={`w-4 h-4 rounded-full transition-colors duration-300 ${todayData[m] ? 'bg-green-500' : 'bg-red-900/50'}`}></div>
                       ))}
                     </div>
                   </div>
                 </Card>
 
                 {meals.map((m, idx) => (
-                  <Card key={m.id} className={`transition-all duration-300 ${todayData[m.id] ? 'bg-emerald-500/5 border-emerald-500/20' : ''}`}>
+                  <Card key={m.id} className={`transition-all duration-300 ${todayData[m.id] ? 'border-green-700/50 bg-gradient-to-br from-green-950/20 to-black' : ''}`}>
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-3">
-                        <button onClick={() => { toggleMeal(today, m.id); if (!todayData[m.id]) triggerYum(); }} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 ${todayData[m.id] ? 'bg-emerald-500 text-white' : 'bg-slate-700/50 border border-slate-600/50 text-slate-600'}`}>
+                        <button onClick={() => { toggleMeal(today, m.id); if (!todayData[m.id]) triggerYum(); }} className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold transition-all duration-300 ${todayData[m.id] ? 'bg-green-600 text-white' : 'bg-neutral-900 border border-red-900/30 text-red-900'}`}>
                           {todayData[m.id] && '✓'}
                         </button>
                         <div>
-                          <h3 className="font-semibold text-white">{m.name}</h3>
-                          <p className="text-xs text-slate-500">{idx === 0 ? 'Morning fuel' : idx === 1 ? 'Midday power' : 'Evening recovery'}</p>
+                          <h3 className="font-black text-white uppercase">{m.name}</h3>
+                          <p className="text-xs text-red-500">{idx === 0 ? 'PRE-WORKOUT FUEL' : idx === 1 ? 'RECOVERY MEAL' : 'MUSCLE BUILDER'}</p>
                         </div>
                       </div>
-                      <span className="text-emerald-400 font-semibold">{m.calories} cal</span>
+                      <span className="text-red-400 font-black">{m.calories} <span className="text-red-600 text-sm">cals</span></span>
                     </div>
                     <ul className="space-y-1 mb-3">
-                      {m.items.map((it, i) => <li key={i} className="text-slate-400 text-sm flex items-center gap-2"><span className="w-1 h-1 bg-slate-600 rounded-full"></span>{it}</li>)}
+                      {m.items.map((it, i) => <li key={i} className="text-red-300/80 text-sm flex items-center gap-2"><span className="w-1.5 h-1.5 bg-red-600 rounded-full"></span>{it}</li>)}
                     </ul>
-                    <p className="text-xs text-slate-500">{m.macros}</p>
+                    <p className="text-xs text-red-500/70">{m.macros}</p>
                   </Card>
                 ))}
 
                 <Card>
-                  <p className="text-sm font-medium text-slate-400 mb-3">Daily totals</p>
+                  <p className="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">DAILY MACRO TOTALS</p>
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center p-3 bg-slate-700/30 rounded-xl">
-                      <p className="text-lg font-bold text-emerald-400">200g</p>
-                      <p className="text-xs text-slate-500">Protein</p>
+                    <div className="text-center p-3 bg-black rounded-xl border border-red-900/30">
+                      <p className="text-xl font-black text-red-400">200g</p>
+                      <p className="text-xs text-red-600 font-bold">PROTEIN</p>
                     </div>
-                    <div className="text-center p-3 bg-slate-700/30 rounded-xl">
-                      <p className="text-lg font-bold text-amber-400">180g</p>
-                      <p className="text-xs text-slate-500">Carbs</p>
+                    <div className="text-center p-3 bg-black rounded-xl border border-orange-900/30">
+                      <p className="text-xl font-black text-orange-400">180g</p>
+                      <p className="text-xs text-orange-600 font-bold">CARBS</p>
                     </div>
-                    <div className="text-center p-3 bg-slate-700/30 rounded-xl">
-                      <p className="text-lg font-bold text-orange-400">60g</p>
-                      <p className="text-xs text-slate-500">Fat</p>
+                    <div className="text-center p-3 bg-black rounded-xl border border-yellow-900/30">
+                      <p className="text-xl font-black text-yellow-400">60g</p>
+                      <p className="text-xs text-yellow-600 font-bold">FAT</p>
                     </div>
                   </div>
                 </Card>
@@ -464,35 +458,35 @@
               <div className="space-y-4 animate-fade-in">
                 <div className="flex gap-2 mb-2">
                   {Object.keys(workouts).map(w => (
-                    <button key={w} onClick={() => setSelectedWorkout(w)} className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${selectedWorkout === w ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50'}`}>{workouts[w].name}</button>
+                    <button key={w} onClick={() => setSelectedWorkout(w)} className={`flex-1 py-2 rounded-xl text-sm font-bold uppercase transition-all duration-300 ${selectedWorkout === w ? 'bg-red-600 text-white shadow-lg shadow-red-900/50' : 'bg-neutral-900 text-red-400 border border-red-900/30'}`}>{workouts[w].name}</button>
                   ))}
                 </div>
-                <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2 text-slate-300 focus:outline-none focus:border-emerald-500/50" />
+                <input type="date" value={workoutDate} onChange={(e) => setWorkoutDate(e.target.value)} className="w-full bg-neutral-900 border border-red-900/30 rounded-xl px-4 py-2 text-red-400 font-bold focus:outline-none focus:border-red-600" />
 
                 <Card>
-                  <h2 className="text-lg font-semibold text-white mb-4">{workouts[selectedWorkout].name} Day</h2>
+                  <h2 className="text-xl font-black text-red-400 uppercase mb-4">{workouts[selectedWorkout].name} Day</h2>
                   <div className="space-y-4">
                     {workouts[selectedWorkout].exercises.map((ex, i) => {
                       const exData = getExerciseData(workoutDate, selectedWorkout, ex);
                       const history = getWorkoutHistory(selectedWorkout, ex);
                       return (
-                        <div key={i} className="p-4 bg-slate-700/30 rounded-xl">
+                        <div key={i} className="p-4 bg-black rounded-xl border border-red-900/20">
                           <div className="flex items-center gap-3 mb-3">
-                            <span className="w-6 h-6 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center text-sm font-medium">{i + 1}</span>
-                            <span className="font-medium text-white">{ex}</span>
+                            <span className="w-7 h-7 bg-red-600 text-white rounded-lg flex items-center justify-center text-sm font-black">{i + 1}</span>
+                            <span className="font-bold text-white">{ex}</span>
                           </div>
                           <div className="grid grid-cols-3 gap-2 mb-2">
                             {['weight', 'sets', 'reps'].map(field => (
                               <div key={field}>
-                                <label className="text-xs text-slate-500 uppercase tracking-wide">{field}</label>
-                                <input type="number" placeholder={field === 'weight' ? 'lbs' : '#'} value={exData[field]} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, field, e.target.value)} className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500/50" />
+                                <label className="text-xs text-red-500 font-bold uppercase">{field}</label>
+                                <input type="number" placeholder={field === 'weight' ? 'lbs' : '#'} value={exData[field]} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, field, e.target.value)} className="w-full bg-neutral-900 border border-red-900/30 rounded-lg px-3 py-2 text-red-400 font-bold text-sm focus:outline-none focus:border-red-600" />
                               </div>
                             ))}
                           </div>
                           {history.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {history.map((h, hi) => (
-                                <span key={hi} className="text-xs bg-slate-800/50 text-slate-400 rounded-lg px-2 py-1">{h.date.slice(5)}: {h.weight}×{h.sets}×{h.reps}</span>
+                                <span key={hi} className="text-xs bg-red-950/50 text-red-400 rounded-lg px-2 py-1">{h.date.slice(5)}: {h.weight}×{h.sets}×{h.reps}</span>
                               ))}
                             </div>
                           )}
@@ -507,34 +501,34 @@
             {/* TIMER */}
             {currentView === 'timer' && (
               <div className="space-y-4 animate-fade-in">
-                <Card className="text-center py-8">
-                  <div className={`text-6xl font-light mb-6 transition-colors duration-300 ${timerSeconds <= 10 && timerSeconds > 0 ? 'text-red-400' : 'text-white'}`} style={timerSeconds <= 10 && timerSeconds > 0 ? {animation: 'pulse 1s infinite'} : {}}>
+                <Card className="text-center py-8" glow={timerRunning}>
+                  <div className={`text-7xl font-black mb-6 transition-colors duration-300 ${timerSeconds <= 10 && timerSeconds > 0 ? 'text-red-500' : 'text-white'}`} style={timerSeconds <= 10 && timerSeconds > 0 ? {animation: 'pulse 1s infinite'} : {}}>
                     {formatTime(timerSeconds)}
                   </div>
                   <div className="flex justify-center gap-3">
-                    <button onClick={() => setTimerRunning(!timerRunning)} className={`px-8 py-3 rounded-xl font-medium transition-all duration-300 ${timerRunning ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                      {timerRunning ? 'Pause' : 'Start'}
+                    <button onClick={() => setTimerRunning(!timerRunning)} className={`px-8 py-3 rounded-xl font-black uppercase transition-all duration-300 ${timerRunning ? 'bg-yellow-600 text-black' : 'bg-green-600 text-white'}`}>
+                      {timerRunning ? 'PAUSE' : 'START'}
                     </button>
-                    <button onClick={() => { setTimerRunning(false); setTimerSeconds(timerMode === 'rest' ? 90 : 30); }} className="px-6 py-3 bg-slate-800/50 text-slate-400 border border-slate-700/50 rounded-xl font-medium">
-                      Reset
+                    <button onClick={() => { setTimerRunning(false); setTimerSeconds(timerMode === 'rest' ? 90 : 30); }} className="px-6 py-3 bg-neutral-900 text-red-400 border border-red-900/30 rounded-xl font-black uppercase">
+                      RESET
                     </button>
                   </div>
                 </Card>
 
                 <div className="flex gap-2">
-                  <button onClick={() => { setTimerMode('rest'); setTimerSeconds(90); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-medium transition-all duration-300 ${timerMode === 'rest' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50'}`}>
-                    Rest Timer
+                  <button onClick={() => { setTimerMode('rest'); setTimerSeconds(90); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-bold uppercase transition-all duration-300 ${timerMode === 'rest' ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-400 border border-red-900/30'}`}>
+                    REST TIMER
                   </button>
-                  <button onClick={() => { setTimerMode('hiit'); setTimerSeconds(30); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-medium transition-all duration-300 ${timerMode === 'hiit' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-slate-800/50 text-slate-400 border border-slate-700/50'}`}>
+                  <button onClick={() => { setTimerMode('hiit'); setTimerSeconds(30); setTimerRunning(false); }} className={`flex-1 py-3 rounded-xl font-bold uppercase transition-all duration-300 ${timerMode === 'hiit' ? 'bg-orange-600 text-white' : 'bg-neutral-900 text-orange-400 border border-orange-900/30'}`}>
                     HIIT
                   </button>
                 </div>
 
                 <Card>
-                  <p className="text-sm text-slate-500 mb-3">Quick set</p>
+                  <p className="text-sm text-red-500 font-bold uppercase mb-3">QUICK SET</p>
                   <div className="flex flex-wrap gap-2">
                     {timerPresets[timerMode].map(secs => (
-                      <button key={secs} onClick={() => { setTimerSeconds(secs); setTimerRunning(false); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${timerSeconds === secs && !timerRunning ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-700/30 text-slate-400 border border-slate-700/30'}`}>
+                      <button key={secs} onClick={() => { setTimerSeconds(secs); setTimerRunning(false); }} className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${timerSeconds === secs && !timerRunning ? 'bg-red-600 text-white' : 'bg-black text-red-400 border border-red-900/30'}`}>
                         {formatTime(secs)}
                       </button>
                     ))}
@@ -547,28 +541,28 @@
             {currentView === 'grocery' && (
               <div className="space-y-4 animate-fade-in">
                 <Card>
-                  <h2 className="font-semibold text-amber-400 mb-3">Bulk Staples</h2>
+                  <h2 className="font-black text-orange-400 uppercase mb-3">BULK STAPLES</h2>
                   <div className="space-y-2">
                     {groceryBulk.map(it => (
-                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${groceryChecked[it] ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-700/30 border border-slate-700/30'}`}>
-                        <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${groceryChecked[it] ? 'bg-emerald-500 text-white' : 'bg-slate-600/50'}`}>
+                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${groceryChecked[it] ? 'bg-green-950/30 border border-green-700/30' : 'bg-black border border-orange-900/20'}`}>
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold transition-colors ${groceryChecked[it] ? 'bg-green-600 text-white' : 'bg-neutral-900 border border-orange-900/30'}`}>
                           {groceryChecked[it] && '✓'}
                         </div>
-                        <span className={`text-sm transition-all ${groceryChecked[it] ? 'text-slate-500 line-through' : 'text-white'}`}>{it}</span>
+                        <span className={`text-sm font-bold transition-all ${groceryChecked[it] ? 'text-green-400/70 line-through' : 'text-orange-300'}`}>{it}</span>
                       </button>
                     ))}
                   </div>
                 </Card>
 
                 <Card>
-                  <h2 className="font-semibold text-emerald-400 mb-3">Weekly Fresh</h2>
+                  <h2 className="font-black text-red-400 uppercase mb-3">WEEKLY FRESH</h2>
                   <div className="space-y-2">
                     {groceryWeekly.map(it => (
-                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${groceryChecked[it] ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-slate-700/30 border border-slate-700/30'}`}>
-                        <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${groceryChecked[it] ? 'bg-emerald-500 text-white' : 'bg-slate-600/50'}`}>
+                      <button key={it} onClick={() => toggleGrocery(it)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 ${groceryChecked[it] ? 'bg-green-950/30 border border-green-700/30' : 'bg-black border border-red-900/20'}`}>
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold transition-colors ${groceryChecked[it] ? 'bg-green-600 text-white' : 'bg-neutral-900 border border-red-900/30'}`}>
                           {groceryChecked[it] && '✓'}
                         </div>
-                        <span className={`text-sm transition-all ${groceryChecked[it] ? 'text-slate-500 line-through' : 'text-white'}`}>{it}</span>
+                        <span className={`text-sm font-bold transition-all ${groceryChecked[it] ? 'text-green-400/70 line-through' : 'text-red-300'}`}>{it}</span>
                       </button>
                     ))}
                   </div>
@@ -581,9 +575,9 @@
               <div className="space-y-4 animate-fade-in">
                 {activeVideo && (
                   <Card className="p-0 overflow-hidden">
-                    <div className="flex justify-between items-center p-4 border-b border-slate-700/50">
-                      <span className="font-medium text-white">Now Playing</span>
-                      <button onClick={() => setActiveVideo(null)} className="text-slate-500 hover:text-white transition-colors">✕</button>
+                    <div className="flex justify-between items-center p-4 border-b border-red-900/30">
+                      <span className="font-black text-red-400 uppercase">NOW PLAYING</span>
+                      <button onClick={() => setActiveVideo(null)} className="text-red-500 hover:text-white transition-colors text-xl">✕</button>
                     </div>
                     <div className="aspect-video">
                       <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${activeVideo}?autoplay=1`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
@@ -593,36 +587,36 @@
 
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {['all', 'philosophy', 'psychology', 'history', 'custom'].map(cat => (
-                    <button key={cat} onClick={() => setVideoCategory(cat)} className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-300 ${videoCategory === cat ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800/50 text-slate-500'}`}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    <button key={cat} onClick={() => setVideoCategory(cat)} className={`px-3 py-1 rounded-lg text-sm font-bold uppercase whitespace-nowrap transition-all duration-300 ${videoCategory === cat ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-400'}`}>
+                      {cat}
                     </button>
                   ))}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   {filteredVideos.map(v => (
-                    <div key={v.id} onClick={() => setActiveVideo(v.id)} className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 ${activeVideo === v.id ? 'ring-2 ring-emerald-500' : ''}`}>
+                    <div key={v.id} onClick={() => setActiveVideo(v.id)} className={`relative group cursor-pointer rounded-xl overflow-hidden transition-all duration-300 border-2 ${activeVideo === v.id ? 'border-red-500' : 'border-transparent'}`}>
                       <img src={`https://img.youtube.com/vi/${v.id}/mqdefault.jpg`} alt="thumbnail" className="w-full aspect-video object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
                       <div className="absolute bottom-0 left-0 right-0 p-2">
-                        <p className="text-xs font-medium text-white line-clamp-2">{v.title}</p>
-                        <span className="text-xs text-slate-400">{v.category}</span>
+                        <p className="text-xs font-bold text-white line-clamp-2">{v.title}</p>
+                        <span className="text-xs text-red-400 uppercase">{v.category}</span>
                       </div>
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-3xl text-white">▶</span>
+                      <div className="absolute inset-0 bg-red-600/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-4xl text-white">▶</span>
                       </div>
                       {v.category === 'custom' && (
-                        <button onClick={(e) => { e.stopPropagation(); removeVideo(v.id); }} className="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                        <button onClick={(e) => { e.stopPropagation(); removeVideo(v.id); }} className="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
                       )}
                     </div>
                   ))}
                 </div>
 
                 <Card>
-                  <p className="text-sm text-slate-500 mb-2">Add your own</p>
+                  <p className="text-sm text-red-500 font-bold uppercase mb-2">ADD YOUR OWN</p>
                   <div className="flex gap-2">
-                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50" />
-                    <button onClick={addVideo} className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl font-medium">Add</button>
+                    <input type="text" placeholder="Paste YouTube URL..." value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addVideo()} className="flex-1 bg-black border border-red-900/30 rounded-xl px-4 py-2 text-red-400 text-sm font-bold placeholder-red-900 focus:outline-none focus:border-red-600" />
+                    <button onClick={addVideo} className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold">ADD</button>
                   </div>
                 </Card>
               </div>
