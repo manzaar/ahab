@@ -24,6 +24,10 @@
       0%, 100% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.3); }
       50% { box-shadow: 0 0 40px rgba(220, 38, 38, 0.5); }
     }
+    @keyframes shrink {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
     .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
     .glow { animation: glow 2s infinite; }
   </style>
@@ -58,16 +62,113 @@
       const [showLogged, setShowLogged] = useState(false);
       const [dayComplete, setDayComplete] = useState(false);
       const [currentTime, setCurrentTime] = useState(new Date());
+      const [showBreakMe, setShowBreakMe] = useState(false);
+      const [breakMeQuote, setBreakMeQuote] = useState(null);
+      const [calendarMonth, setCalendarMonth] = useState(new Date());
+
+      const brutalQuotes = [
+        { quote: "Push through the pain. Giving up hurts more.", char: "Vegeta" },
+        { quote: "I'll surpass my limits. Right here, right now!", char: "Goku" },
+        { quote: "If you don't fight, you can't win.", char: "Eren Yeager" },
+        { quote: "The only one who can beat me is me.", char: "Vegeta" },
+        { quote: "Give up on your dreams and die.", char: "Levi Ackerman" },
+        { quote: "If you win, you live. If you lose, you die. If you don't fight, you can't win!", char: "Eren Yeager" },
+        { quote: "I don't care if this is the end. I will keep moving forward until all my enemies are destroyed.", char: "Guts" },
+        { quote: "I am the hope of the universe. The answer to all living things that cry out for peace.", char: "Goku" },
+        { quote: "Every scar I have was given to me by someone trying to kill me. And I'm still here.", char: "Guts" },
+        { quote: "A dropout will beat a genius through hard work.", char: "Rock Lee" },
+        { quote: "I don't want to conquer anything. I just think the guy with the most freedom is the Pirate King.", char: "Luffy" },
+        { quote: "Miracles only happen to those who never give up.", char: "Luffy" },
+        { quote: "Pain is nothing compared to what it feels like to quit.", char: "Vegeta" },
+        { quote: "Those who cannot sacrifice anything, can never change anything.", char: "Eren Yeager" },
+        { quote: "You should enjoy the little detours to the fullest. Because that's where you'll find things more important than what you want.", char: "Gon" }
+      ];
+
+      const triggerBreakMe = () => {
+        const randomQuote = brutalQuotes[Math.floor(Math.random() * brutalQuotes.length)];
+        setBreakMeQuote(randomQuote);
+        setShowBreakMe(true);
+        setTimeout(() => setShowBreakMe(false), 5000);
+      };
+      const [xp, setXp] = useState(0);
+      const [personalRecords, setPersonalRecords] = useState({
+        bench: { weight: '', reps: '', date: '' },
+        squat: { weight: '', reps: '', date: '' },
+        deadlift: { weight: '', reps: '', date: '' },
+        ohp: { weight: '', reps: '', date: '' },
+        pullups: { weight: '', reps: '', date: '' }
+      });
+
+      const prNames = {
+        bench: 'BENCH PRESS',
+        squat: 'SQUAT',
+        deadlift: 'DEADLIFT',
+        ohp: 'OVERHEAD PRESS',
+        pullups: 'PULL-UPS'
+      };
+
+      const ranks = [
+        { level: 10, name: 'HOLLOW', icon: '💀', xpRequired: 0 },
+        { level: 9, name: 'REVENANT', icon: '⚔️', xpRequired: 100 },
+        { level: 8, name: 'SLAYER', icon: '🛡️', xpRequired: 200 },
+        { level: 7, name: 'OVERLORD', icon: '👹', xpRequired: 300 },
+        { level: 6, name: 'APEX', icon: '⚡', xpRequired: 400 },
+        { level: 5, name: 'MYTHIC', icon: '🔮', xpRequired: 500 },
+        { level: 4, name: 'EXALTED', icon: '👑', xpRequired: 600 },
+        { level: 3, name: 'DEMIGOD', icon: '🌟', xpRequired: 700 },
+        { level: 2, name: 'ASCENDANT', icon: '✨', xpRequired: 800 },
+        { level: 1, name: 'APOTHEOSIS', icon: '🏆', xpRequired: 900 }
+      ];
+
+      const getCurrentRank = () => {
+        for (let i = ranks.length - 1; i >= 0; i--) {
+          if (xp >= ranks[i].xpRequired) return ranks[i];
+        }
+        return ranks[0];
+      };
+
+      const getNextRank = () => {
+        const current = getCurrentRank();
+        const idx = ranks.findIndex(r => r.level === current.level);
+        return idx < ranks.length - 1 ? ranks[idx + 1] : null;
+      };
+
+      const getXpProgress = () => {
+        const current = getCurrentRank();
+        const next = getNextRank();
+        if (!next) return 100;
+        const xpIntoLevel = xp - current.xpRequired;
+        const xpNeeded = next.xpRequired - current.xpRequired;
+        return (xpIntoLevel / xpNeeded) * 100;
+      };
 
       const logProgress = () => {
         localStorage.setItem('weekData', JSON.stringify(weekData));
         localStorage.setItem('currentWeight', currentWeight);
         localStorage.setItem('grocery', JSON.stringify(groceryChecked));
         localStorage.setItem('workouts', JSON.stringify(workoutLog));
+
+        // Award XP: 10 per meal, 20 for training, 5 for water (8 glasses)
+        const td = weekData[getTodayString()] || {};
+        const todayKey = `xp_awarded_${getTodayString()}`;
+        if (!localStorage.getItem(todayKey)) {
+          let earnedXp = 0;
+          if (td.meal1) earnedXp += 10;
+          if (td.meal2) earnedXp += 10;
+          if (td.meal3) earnedXp += 10;
+          if (td.training) earnedXp += 20;
+          if ((td.water || 0) >= 8) earnedXp += 5;
+          if (earnedXp > 0) {
+            const newXp = xp + earnedXp;
+            setXp(newXp);
+            localStorage.setItem('xp', newXp.toString());
+            localStorage.setItem(todayKey, 'true');
+          }
+        }
+
         setShowLogged(true);
         setTimeout(() => setShowLogged(false), 1500);
         // If all tasks done, mark day as complete to hide the bar
-        const td = weekData[getTodayString()] || {};
         if (td.meal1 && td.meal2 && td.meal3 && td.training) {
           setDayComplete(true);
         }
@@ -192,6 +293,8 @@
         const w = localStorage.getItem('currentWeight'); if (w) setCurrentWeight(w);
         const g = localStorage.getItem('grocery'); if (g) setGroceryChecked(JSON.parse(g));
         const wl = localStorage.getItem('workouts'); if (wl) setWorkoutLog(JSON.parse(wl));
+        const savedXp = localStorage.getItem('xp'); if (savedXp) setXp(parseInt(savedXp));
+        const savedPRs = localStorage.getItem('personalRecords'); if (savedPRs) setPersonalRecords(JSON.parse(savedPRs));
         const vids = localStorage.getItem('videos');
         if (vids) { const saved = JSON.parse(vids); const merged = [...defaultVideos]; saved.forEach(v => { if (!merged.find(m => m.id === v.id)) merged.push(v); }); setVideos(merged); }
         else setVideos(defaultVideos);
@@ -230,6 +333,48 @@
       };
 
       const getExerciseData = (date, workoutType, exercise) => workoutLog[date]?.[workoutType]?.[exercise] || { weight: '', reps: '', sets: '' };
+
+      const updatePR = (lift, field, value) => {
+        const newPRs = { ...personalRecords, [lift]: { ...personalRecords[lift], [field]: value } };
+        setPersonalRecords(newPRs);
+        localStorage.setItem('personalRecords', JSON.stringify(newPRs));
+      };
+
+      const getCalendarDays = () => {
+        const year = calendarMonth.getFullYear();
+        const month = calendarMonth.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startPadding = firstDay.getDay();
+        const days = [];
+
+        for (let i = 0; i < startPadding; i++) days.push(null);
+        for (let i = 1; i <= daysInMonth; i++) days.push(i);
+        return days;
+      };
+
+      const getDayStatus = (day) => {
+        if (!day) return 'empty';
+        const year = calendarMonth.getFullYear();
+        const month = calendarMonth.getMonth();
+        const dateObj = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        if (dateObj > today) return 'future';
+
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = dayNames[dateObj.getDay()];
+        const data = weekData[dayName] || {};
+
+        const meals = (data.meal1 ? 1 : 0) + (data.meal2 ? 1 : 0) + (data.meal3 ? 1 : 0);
+        const training = data.training ? 1 : 0;
+
+        if (meals === 3 && training === 1) return 'perfect';
+        if (meals > 0 || training > 0) return 'partial';
+        return 'missed';
+      };
 
       const getWorkoutHistory = (workoutType, exercise) => {
         const history = [];
@@ -273,6 +418,20 @@
         return { mealsHit, workoutsHit, consistency: totalMeals > 0 ? Math.round((mealsHit / totalMeals) * 100) : 0, waterTotal };
       };
 
+      const getLastWeekStats = () => {
+        const lastWeek = JSON.parse(localStorage.getItem('lastWeekData') || '{}');
+        let mealsHit = 0, workoutsHit = 0;
+        days.forEach(d => {
+          if (lastWeek[d]) {
+            if (lastWeek[d].meal1) mealsHit++;
+            if (lastWeek[d].meal2) mealsHit++;
+            if (lastWeek[d].meal3) mealsHit++;
+            if (lastWeek[d].training) workoutsHit++;
+          }
+        });
+        return { mealsHit, workoutsHit, consistency: Math.round((mealsHit / 21) * 100) };
+      };
+
       const getStreak = () => {
         let streak = 0;
         const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -309,6 +468,7 @@
       const todayData = weekData[today] || {};
       const progress = ((233 - parseFloat(currentWeight)) / 43) * 100;
       const weeklyStats = getWeeklyStats();
+      const lastWeekStats = getLastWeekStats();
       const streak = getStreak();
       const nextWorkout = getNextWorkout();
       const lbsLost = Math.max(0, 233 - parseFloat(currentWeight || 233)).toFixed(1);
@@ -346,9 +506,9 @@
             </div>
 
             {/* Navigation */}
-            <div className="flex gap-2 mb-6">
-              {['home', 'meals', 'workouts', 'grocery'].map(v => (
-                <button key={v} onClick={() => setCurrentView(v)} className={`flex-1 px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200 ${currentView === v ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-400/70 border border-red-900/40 hover:text-red-400 hover:border-red-700/50'}`}>
+            <div className="flex gap-1.5 mb-6 flex-wrap">
+              {['home', 'meals', 'workouts', 'power', 'calendar', 'grocery'].map(v => (
+                <button key={v} onClick={() => setCurrentView(v)} className={`flex-1 min-w-[60px] px-2 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all duration-200 ${currentView === v ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-400/70 border border-red-900/40 hover:text-red-400 hover:border-red-700/50'}`}>
                   {v}
                 </button>
               ))}
@@ -362,13 +522,23 @@
                   <div className="text-6xl font-bold text-red-500 tracking-wider" style={{fontFamily: 'Orbitron, monospace', textShadow: '0 0 20px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.3)'}}>
                     {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace(' ', '')}
                   </div>
+                  {/* Countdown to Sept 1, 2026 */}
+                  <div className="mt-2">
+                    <p className="text-red-600 text-xs font-bold tracking-wider" style={{fontFamily: 'Orbitron, monospace'}}>
+                      DAYS UNTIL SEPT 1, 2026: <span className="text-red-400 text-lg">{Math.max(0, Math.ceil((new Date('2026-09-01') - currentTime) / (1000 * 60 * 60 * 24)))}</span>
+                    </p>
+                  </div>
                 </div>
 
+                {/* Rank Display */}
                 <Card className="bg-gradient-to-br from-red-950/50 to-black border-red-700/30">
-                  <div className="flex justify-between items-start">
+                  <div className="flex justify-between items-start mb-3">
                     <div>
-                      <p className="text-red-500 text-xs font-bold tracking-wider">{getTimeGreeting()}</p>
-                      <h2 className="text-2xl font-black text-white">WARRIOR</h2>
+                      <p className="text-red-500 text-xs font-bold tracking-wider">RANK LEVEL {getCurrentRank().level}</p>
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <span className="text-3xl">{getCurrentRank().icon}</span>
+                        {getCurrentRank().name}
+                      </h2>
                     </div>
                     <div className="text-right">
                       <div className="flex items-center gap-2">
@@ -376,6 +546,17 @@
                         <span className="text-4xl font-black text-orange-500">{streak}</span>
                       </div>
                       <p className="text-xs text-red-500 font-bold">DAY STREAK</p>
+                    </div>
+                  </div>
+                  {/* XP Progress Bar */}
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-red-400 font-bold">{xp} XP</span>
+                      {getNextRank() && <span className="text-red-600">NEXT: {getNextRank().name} ({getNextRank().xpRequired} XP)</span>}
+                      {!getNextRank() && <span className="text-yellow-500 font-bold">MAX RANK</span>}
+                    </div>
+                    <div className="w-full bg-red-950/50 rounded-full h-2 overflow-hidden">
+                      <div className="bg-gradient-to-r from-orange-600 to-yellow-500 h-2 rounded-full transition-all duration-500" style={{ width: `${getXpProgress()}%` }} />
                     </div>
                   </div>
                 </Card>
@@ -399,6 +580,46 @@
                   </Card>
                 </div>
 
+                {/* VS Last Week */}
+                <Card className="border-purple-900/30">
+                  <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-3">⚔️ VS LAST WEEK</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-neutral-400">WORKOUTS</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{weeklyStats.workoutsHit}</span>
+                        <span className="text-neutral-600">vs</span>
+                        <span className="text-sm text-neutral-500">{lastWeekStats.workoutsHit}</span>
+                        {weeklyStats.workoutsHit > lastWeekStats.workoutsHit && <span className="text-green-500 font-bold">▲</span>}
+                        {weeklyStats.workoutsHit < lastWeekStats.workoutsHit && <span className="text-red-500 font-bold">▼</span>}
+                        {weeklyStats.workoutsHit === lastWeekStats.workoutsHit && <span className="text-neutral-600">—</span>}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-neutral-400">MEALS</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{weeklyStats.mealsHit}</span>
+                        <span className="text-neutral-600">vs</span>
+                        <span className="text-sm text-neutral-500">{lastWeekStats.mealsHit}</span>
+                        {weeklyStats.mealsHit > lastWeekStats.mealsHit && <span className="text-green-500 font-bold">▲</span>}
+                        {weeklyStats.mealsHit < lastWeekStats.mealsHit && <span className="text-red-500 font-bold">▼</span>}
+                        {weeklyStats.mealsHit === lastWeekStats.mealsHit && <span className="text-neutral-600">—</span>}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-neutral-400">CONSISTENCY</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{weeklyStats.consistency}%</span>
+                        <span className="text-neutral-600">vs</span>
+                        <span className="text-sm text-neutral-500">{lastWeekStats.consistency}%</span>
+                        {weeklyStats.consistency > lastWeekStats.consistency && <span className="text-green-500 font-bold">▲</span>}
+                        {weeklyStats.consistency < lastWeekStats.consistency && <span className="text-red-500 font-bold">▼</span>}
+                        {weeklyStats.consistency === lastWeekStats.consistency && <span className="text-neutral-600">—</span>}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
                 <Card onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }} className="bg-gradient-to-r from-orange-950/50 to-black border-orange-700/30">
                   <div className="flex justify-between items-center">
                     <div>
@@ -408,6 +629,11 @@
                     <span className="text-orange-500 text-2xl">→</span>
                   </div>
                 </Card>
+
+                {/* BREAK ME Button */}
+                <button onClick={triggerBreakMe} className="w-full py-4 bg-gradient-to-r from-red-800 via-red-600 to-red-800 text-white font-black text-lg uppercase tracking-widest rounded-2xl border-2 border-red-500 shadow-lg shadow-red-900/50 hover:from-red-700 hover:via-red-500 hover:to-red-700 transition-all active:scale-95 glow">
+                  💀 BREAK ME 💀
+                </button>
 
                 <Card>
                   <div className="flex justify-between items-center mb-4">
@@ -598,6 +824,117 @@
               </div>
             )}
 
+            {/* POWER LEVEL */}
+            {currentView === 'power' && (
+              <div className="space-y-4 animate-fade-in">
+                <Card className="bg-gradient-to-br from-yellow-950/30 to-black border-yellow-700/30">
+                  <h2 className="text-xl font-black text-yellow-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+                    🏆 POWER LEVEL
+                  </h2>
+                  <p className="text-yellow-600 text-xs mb-4">YOUR PERSONAL RECORDS - PROOF OF STRENGTH</p>
+                </Card>
+
+                {Object.keys(prNames).map(lift => (
+                  <Card key={lift} className="border-yellow-900/40">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xl">🏆</span>
+                      <h3 className="font-black text-yellow-400 uppercase">{prNames[lift]}</h3>
+                    </div>
+                    {personalRecords[lift]?.weight && personalRecords[lift]?.reps ? (
+                      <div className="bg-gradient-to-r from-yellow-950/50 to-transparent border-l-4 border-yellow-500 rounded-r-xl p-3 mb-3">
+                        <p className="text-yellow-300 font-black text-lg">
+                          {personalRecords[lift].weight} LBS × {personalRecords[lift].reps} REPS
+                        </p>
+                        {personalRecords[lift].date && (
+                          <p className="text-yellow-600 text-xs mt-1">{personalRecords[lift].date}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-red-600 text-sm mb-3 italic">NO PR SET YET</p>
+                    )}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-xs text-yellow-600 font-bold">WEIGHT</label>
+                        <input type="number" placeholder="LBS" value={personalRecords[lift]?.weight || ''} onChange={(e) => updatePR(lift, 'weight', e.target.value)} className="w-full bg-black border border-yellow-900/50 rounded-lg px-3 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-600" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-yellow-600 font-bold">REPS</label>
+                        <input type="number" placeholder="#" value={personalRecords[lift]?.reps || ''} onChange={(e) => updatePR(lift, 'reps', e.target.value)} className="w-full bg-black border border-yellow-900/50 rounded-lg px-3 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-600" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-yellow-600 font-bold">DATE</label>
+                        <input type="date" value={personalRecords[lift]?.date || ''} onChange={(e) => updatePR(lift, 'date', e.target.value)} className="w-full bg-black border border-yellow-900/50 rounded-lg px-3 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-600" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* CALENDAR */}
+            {currentView === 'calendar' && (
+              <div className="space-y-4 animate-fade-in">
+                <Card>
+                  <div className="flex justify-between items-center mb-4">
+                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="text-red-500 font-bold text-xl px-3 py-1 hover:bg-red-950/30 rounded-lg transition-colors">←</button>
+                    <h2 className="text-lg font-black text-red-400 uppercase tracking-wider">
+                      {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </h2>
+                    <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="text-red-500 font-bold text-xl px-3 py-1 hover:bg-red-950/30 rounded-lg transition-colors">→</button>
+                  </div>
+
+                  {/* Day headers */}
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                      <div key={i} className="text-center text-xs font-bold text-red-600">{d}</div>
+                    ))}
+                  </div>
+
+                  {/* Calendar grid */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {getCalendarDays().map((day, i) => {
+                      const status = getDayStatus(day);
+                      const statusColors = {
+                        empty: 'bg-transparent',
+                        future: 'bg-neutral-900 text-neutral-700',
+                        perfect: 'bg-gradient-to-br from-yellow-600 to-yellow-500 text-black',
+                        partial: 'bg-gradient-to-br from-red-700 to-red-600 text-white',
+                        missed: 'bg-neutral-950 text-neutral-600 border border-neutral-800'
+                      };
+                      return (
+                        <div key={i} className={`aspect-square flex items-center justify-center rounded-lg text-xs font-bold ${statusColors[status]}`}>
+                          {day}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                {/* Legend */}
+                <Card>
+                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">LEGEND</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-gradient-to-br from-yellow-600 to-yellow-500"></div>
+                      <span className="text-xs text-yellow-400 font-bold">PERFECT DAY</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-gradient-to-br from-red-700 to-red-600"></div>
+                      <span className="text-xs text-red-400 font-bold">PARTIAL</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-neutral-950 border border-neutral-800"></div>
+                      <span className="text-xs text-neutral-500 font-bold">MISSED</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded bg-neutral-900"></div>
+                      <span className="text-xs text-neutral-600 font-bold">FUTURE</span>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
             {/* GROCERY */}
             {currentView === 'grocery' && (
               <div className="space-y-4 animate-fade-in">
@@ -637,6 +974,22 @@
           {showLogged && (
             <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-50">
               <div className="text-4xl font-black text-green-400" style={{animation: 'yumPop 1.5s ease-out forwards'}}>LOGGED! ✓</div>
+            </div>
+          )}
+
+          {/* BREAK ME Modal */}
+          {showBreakMe && breakMeQuote && (
+            <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-6">
+              <div className="text-center animate-fade-in">
+                <div className="text-6xl mb-6">💀</div>
+                <p className="text-2xl md:text-3xl font-black text-red-500 leading-tight mb-6" style={{textShadow: '0 0 30px rgba(239,68,68,0.5)'}}>
+                  "{breakMeQuote.quote}"
+                </p>
+                <p className="text-red-400 font-bold text-lg">— {breakMeQuote.char}</p>
+                <div className="mt-8 w-full bg-red-950 rounded-full h-1 overflow-hidden">
+                  <div className="bg-red-500 h-1 rounded-full" style={{animation: 'shrink 5s linear forwards'}} />
+                </div>
+              </div>
             </div>
           )}
 
