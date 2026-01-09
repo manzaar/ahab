@@ -55,6 +55,7 @@
       const [timerMode, setTimerMode] = useState('rest');
       const [showYum, setShowYum] = useState(false);
       const [showLogged, setShowLogged] = useState(false);
+      const [dayComplete, setDayComplete] = useState(false);
 
       const logProgress = () => {
         localStorage.setItem('weekData', JSON.stringify(weekData));
@@ -63,6 +64,11 @@
         localStorage.setItem('workouts', JSON.stringify(workoutLog));
         setShowLogged(true);
         setTimeout(() => setShowLogged(false), 1500);
+        // If all tasks done, mark day as complete to hide the bar
+        const td = weekData[getTodayString()] || {};
+        if (td.meal1 && td.meal2 && td.meal3 && td.training) {
+          setDayComplete(true);
+        }
       };
 
       const defaultVideos = [
@@ -187,6 +193,8 @@
       const toggleMeal = (day, meal) => {
         const newData = { ...weekData, [day]: { ...weekData[day], [meal]: !weekData[day][meal] } };
         setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
+        // Reset dayComplete if unchecking on today
+        if (day === getTodayString()) setDayComplete(false);
       };
 
       const updateWeight = (day, wt) => {
@@ -392,7 +400,12 @@
                 </Card>
 
                 <Card>
-                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-4">{today}'s Log</h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">{today}'s Log</h3>
+                    <button onClick={logProgress} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
+                      LOG IT
+                    </button>
+                  </div>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-red-400 text-sm font-bold w-20">WEIGHT</span>
                     <input type="number" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors" />
@@ -617,45 +630,42 @@
             </div>
           )}
 
-          {/* Floating Daily Progress Bar */}
-          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4 z-40">
-            <div className="max-w-lg mx-auto">
-              <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-3 border border-red-900/30 shadow-lg shadow-black/50">
-                <div className="flex items-center justify-between gap-2">
-                  {/* Meals */}
-                  <div className="flex gap-1">
-                    {['meal1', 'meal2', 'meal3'].map((m, i) => (
-                      <div key={m} className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData[m] ? 'bg-red-600 text-white' : 'bg-neutral-800 text-red-900 border border-red-900/30'}`}>
-                        {todayData[m] ? '✓' : i + 1}
-                      </div>
-                    ))}
+          {/* Floating Daily Progress Bar - Hidden at 100% after logging */}
+          {!dayComplete && (
+            <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pb-4 px-4 z-40">
+              <div className="max-w-lg mx-auto">
+                <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-3 border border-red-900/30 shadow-lg shadow-black/50">
+                  <div className="flex items-center justify-between gap-2">
+                    {/* Meals */}
+                    <div className="flex gap-1">
+                      {['meal1', 'meal2', 'meal3'].map((m, i) => (
+                        <div key={m} className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData[m] ? 'bg-red-600 text-white' : 'bg-neutral-800 text-red-900 border border-red-900/30'}`}>
+                          {todayData[m] ? '✓' : i + 1}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Gym */}
+                    <div className={`w-7 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-800 text-orange-900 border border-orange-900/30'}`}>
+                      {todayData.training ? '✓' : 'G'}
+                    </div>
+
+                    {/* Water mini-display */}
+                    <div className="flex gap-0.5 items-center">
+                      {[1,2,3,4,5,6,7,8].map(n => (
+                        <div key={n} className={`w-1.5 h-3 rounded-sm transition-all ${(todayData.water || 0) >= n ? 'bg-blue-500' : 'bg-neutral-800'}`}></div>
+                      ))}
+                    </div>
+
+                    {/* Daily % */}
+                    <span className="text-sm font-black text-red-400 min-w-[40px] text-center">
+                      {Math.round((((todayData.meal1 ? 1 : 0) + (todayData.meal2 ? 1 : 0) + (todayData.meal3 ? 1 : 0) + (todayData.training ? 1 : 0)) / 4) * 100)}%
+                    </span>
                   </div>
-
-                  {/* Gym */}
-                  <div className={`w-7 h-6 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${todayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-800 text-orange-900 border border-orange-900/30'}`}>
-                    {todayData.training ? '✓' : 'G'}
-                  </div>
-
-                  {/* Water mini-display */}
-                  <div className="flex gap-0.5 items-center">
-                    {[1,2,3,4,5,6,7,8].map(n => (
-                      <div key={n} className={`w-1.5 h-3 rounded-sm transition-all ${(todayData.water || 0) >= n ? 'bg-blue-500' : 'bg-neutral-800'}`}></div>
-                    ))}
-                  </div>
-
-                  {/* Daily % */}
-                  <span className="text-sm font-black text-red-400 min-w-[40px] text-center">
-                    {Math.round((((todayData.meal1 ? 1 : 0) + (todayData.meal2 ? 1 : 0) + (todayData.meal3 ? 1 : 0) + (todayData.training ? 1 : 0)) / 4) * 100)}%
-                  </span>
-
-                  {/* Log It Button */}
-                  <button onClick={logProgress} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
-                    LOG IT
-                  </button>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       );
     };
