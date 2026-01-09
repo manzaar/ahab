@@ -361,7 +361,11 @@
 
       const updateWeight = (day, wt) => {
         const newData = { ...weekData, [day]: { ...weekData[day], weight: wt } };
-        setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
+        setWeekData(newData);
+      };
+
+      const saveWeight = (day, wt) => {
+        localStorage.setItem('weekData', JSON.stringify(weekData));
         if (wt) { setCurrentWeight(wt); localStorage.setItem('currentWeight', wt); }
       };
 
@@ -713,7 +717,7 @@
                   {/* Weight Input */}
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-red-400 text-sm font-bold w-20">WEIGHT</span>
-                    <input type="number" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors" />
+                    <input type="text" inputMode="decimal" pattern="[0-9.]*" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} onBlur={(e) => saveWeight(today, e.target.value)} className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors" />
                   </div>
 
                   {/* Meals - Reactor Switches */}
