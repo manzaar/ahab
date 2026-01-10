@@ -122,7 +122,7 @@
     };
 
     // Weight Graph Component
-    const WeightGraph = ({ history, startWeight = 233, goalWeight = 190, previewWeight }) => {
+    const WeightGraph = ({ history, startWeight = 233, goalWeight = 190 }) => {
       if (!history || history.length < 1) return null;
 
       const width = 300;
@@ -131,24 +131,18 @@
       const graphWidth = width - padding.left - padding.right;
       const graphHeight = height - padding.top - padding.bottom;
 
-      // Create display history with preview if available
-      const displayHistory = previewWeight && !isNaN(parseFloat(previewWeight))
-        ? [...history.filter(h => h.date !== new Date().toISOString().split('T')[0]), { date: new Date().toISOString().split('T')[0], weight: parseFloat(previewWeight), isPreview: true }].sort((a, b) => a.date.localeCompare(b.date))
-        : history;
-
       // Get min/max for scale
-      const weights = displayHistory.map(h => h.weight);
+      const weights = history.map(h => h.weight);
       const minWeight = Math.min(goalWeight, ...weights) - 5;
       const maxWeight = Math.max(startWeight, ...weights) + 5;
       const weightRange = maxWeight - minWeight || 1; // Prevent division by zero
 
       // Calculate positions
-      const points = displayHistory.map((h, i) => ({
-        x: padding.left + (displayHistory.length === 1 ? graphWidth / 2 : (i / (displayHistory.length - 1)) * graphWidth),
+      const points = history.map((h, i) => ({
+        x: padding.left + (history.length === 1 ? graphWidth / 2 : (i / (history.length - 1)) * graphWidth),
         y: padding.top + ((maxWeight - h.weight) / weightRange) * graphHeight,
         weight: h.weight,
-        date: h.date,
-        isPreview: h.isPreview
+        date: h.date
       }));
 
       // Create path
@@ -183,8 +177,8 @@
           {/* Data points - larger for mobile */}
           {points.map((p, i) => (
             <g key={i}>
-              <circle cx={p.x} cy={p.y} r="6" fill={p.isPreview ? "#fbbf24" : "#ef4444"} stroke="#000" strokeWidth="2" className={p.isPreview ? "animate-pulse" : ""} />
-              <text x={p.x} y={p.y - 10} textAnchor="middle" fill={p.isPreview ? "#fbbf24" : "#fff"} fontSize="11" fontWeight="bold">{p.weight}</text>
+              <circle cx={p.x} cy={p.y} r="6" fill="#ef4444" stroke="#000" strokeWidth="2" />
+              <text x={p.x} y={p.y - 10} textAnchor="middle" fill="#fff" fontSize="11" fontWeight="bold">{p.weight}</text>
             </g>
           ))}
 
@@ -202,10 +196,18 @@
     };
 
     // Isolated input component - manages own state while typing, syncs on blur
-    const DebouncedInput = ({ value, onSave, onPreview, placeholder, className, inputMode = 'text', pattern }) => {
+    const DebouncedInput = ({ value, onSave, placeholder, className, inputMode = 'text', pattern }) => {
       const [localValue, setLocalValue] = useState(value || '');
-      const previewTimeoutRef = useRef(null);
-      useEffect(() => { setLocalValue(value || ''); }, [value]);
+      const initialValueRef = useRef(value);
+
+      // Only sync from parent if the parent's value actually changed (not from our own save)
+      useEffect(() => {
+        if (value !== initialValueRef.current) {
+          setLocalValue(value || '');
+          initialValueRef.current = value;
+        }
+      }, [value]);
+
       return (
         <input
           type="text"
@@ -213,18 +215,10 @@
           pattern={pattern}
           placeholder={placeholder}
           value={localValue}
-          onChange={(e) => {
-            setLocalValue(e.target.value);
-            // Debounce preview updates to prevent keyboard dismissal
-            if (onPreview) {
-              if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
-              previewTimeoutRef.current = setTimeout(() => onPreview(e.target.value), 300);
-            }
-          }}
+          onChange={(e) => setLocalValue(e.target.value)}
           onBlur={() => {
             onSave(localValue);
-            if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
-            if (onPreview) onPreview(null); // Clear preview on blur
+            initialValueRef.current = localValue;
           }}
           className={className}
         />
@@ -360,7 +354,6 @@
       const [longPressTimer, setLongPressTimer] = useState(null);
       const [xp, setXp] = useState(0);
       const [weightHistory, setWeightHistory] = useState([{ date: '2025-01-01', weight: 233 }]);
-      const [liveWeightPreview, setLiveWeightPreview] = useState(null);
 
       // Reactor Switch Component
       const ReactorSwitch = ({ engaged, onToggle, label, color = 'red' }) => {
@@ -997,7 +990,6 @@
                             key={editDay}
                             value={editData.weight}
                             onSave={(val) => saveWeight(editDay, val)}
-                            onPreview={(val) => setLiveWeightPreview(val)}
                             placeholder="LBS"
                             inputMode="decimal"
                             pattern="[0-9.]*"
@@ -1053,7 +1045,7 @@
                       >↻</button>
                     </div>
                   </div>
-                  <WeightGraph history={weightHistory} startWeight={233} goalWeight={190} previewWeight={liveWeightPreview} />
+                  <WeightGraph history={weightHistory} startWeight={233} goalWeight={190} />
                   <div className="flex justify-between items-center mt-2 text-xs">
                     <span className="text-neutral-500">{weightHistory.length} entries</span>
                     <span className="text-red-400 font-bold">
