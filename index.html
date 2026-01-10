@@ -797,10 +797,20 @@
                 <Card>
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">WEIGHT JOURNEY</h3>
-                    <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-2 text-xs">
                       <span className="text-red-400/70">233</span>
                       <span className="text-neutral-600">→</span>
                       <span className="text-green-400/70">190</span>
+                      <button
+                        onClick={() => {
+                          if (confirm('Reset weight history?')) {
+                            const initial = [{ date: '2025-01-01', weight: 233 }];
+                            setWeightHistory(initial);
+                            localStorage.setItem('weightHistory', JSON.stringify(initial));
+                          }
+                        }}
+                        className="ml-2 text-neutral-600 hover:text-red-500 transition-colors"
+                      >↻</button>
                     </div>
                   </div>
                   <WeightGraph history={weightHistory} startWeight={233} goalWeight={190} />
