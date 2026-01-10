@@ -228,6 +228,7 @@
       const [showLogged, setShowLogged] = useState(false);
       const [dayComplete, setDayComplete] = useState(false);
       const [selectedLogDay, setSelectedLogDay] = useState(null); // null = today
+      const [loggedDays, setLoggedDays] = useState({}); // tracks which days have been logged
       const [showSyncModal, setShowSyncModal] = useState(false);
       const [syncCode, setSyncCode] = useState('');
       const [syncStatus, setSyncStatus] = useState('');
@@ -375,33 +376,40 @@
         return (xpIntoLevel / xpNeeded) * 100;
       };
 
-      const logProgress = () => {
+      const logProgress = (dayToLog) => {
+        const day = dayToLog || getTodayString();
         localStorage.setItem('weekData', JSON.stringify(weekData));
         localStorage.setItem('currentWeight', currentWeight);
         localStorage.setItem('grocery', JSON.stringify(groceryChecked));
         localStorage.setItem('workouts', JSON.stringify(workoutLog));
 
-        // Award XP: 10 per meal, 20 for training, 5 for water (8 glasses)
-        const td = weekData[getTodayString()] || {};
-        const todayKey = `xp_awarded_${getTodayString()}`;
-        if (!localStorage.getItem(todayKey)) {
-          let earnedXp = 0;
-          if (td.meal1) earnedXp += 10;
-          if (td.meal2) earnedXp += 10;
-          if (td.meal3) earnedXp += 10;
-          if (td.training) earnedXp += 20;
-          if ((td.water || 0) >= 8) earnedXp += 5;
-          if (earnedXp > 0) {
-            const newXp = xp + earnedXp;
-            setXp(newXp);
-            localStorage.setItem('xp', newXp.toString());
-            localStorage.setItem(todayKey, 'true');
+        // Award XP: 10 per meal, 20 for training, 5 for water (8 glasses) - only for today
+        if (day === getTodayString()) {
+          const td = weekData[day] || {};
+          const todayKey = `xp_awarded_${day}`;
+          if (!localStorage.getItem(todayKey)) {
+            let earnedXp = 0;
+            if (td.meal1) earnedXp += 10;
+            if (td.meal2) earnedXp += 10;
+            if (td.meal3) earnedXp += 10;
+            if (td.training) earnedXp += 20;
+            if ((td.water || 0) >= 8) earnedXp += 5;
+            if (earnedXp > 0) {
+              const newXp = xp + earnedXp;
+              setXp(newXp);
+              localStorage.setItem('xp', newXp.toString());
+              localStorage.setItem(todayKey, 'true');
+            }
           }
         }
+
+        // Mark this day as logged (hides LOG IT button)
+        setLoggedDays(prev => ({ ...prev, [day]: true }));
 
         setShowLogged(true);
         setTimeout(() => setShowLogged(false), 1500);
         // If all tasks done, mark day as complete to hide the bar
+        const td = weekData[day] || {};
         if (td.meal1 && td.meal2 && td.meal3 && td.training) {
           setDayComplete(true);
         }
@@ -575,12 +583,16 @@
         setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
         // Reset dayComplete if unchecking on today
         if (day === getTodayString()) setDayComplete(false);
+        // Mark day as needing to be logged
+        setLoggedDays(prev => ({ ...prev, [day]: false }));
       };
 
       const saveWeight = (day, wt) => {
         const newData = { ...weekData, [day]: { ...weekData[day], weight: wt } };
         setWeekData(newData);
         localStorage.setItem('weekData', JSON.stringify(newData));
+        // Mark day as needing to be logged
+        setLoggedDays(prev => ({ ...prev, [day]: false }));
         if (wt) {
           setCurrentWeight(wt);
           localStorage.setItem('currentWeight', wt);
@@ -603,6 +615,8 @@
       const updateWater = (day, amt) => {
         const newData = { ...weekData, [day]: { ...weekData[day], water: amt } };
         setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
+        // Mark day as needing to be logged
+        setLoggedDays(prev => ({ ...prev, [day]: false }));
       };
 
       const toggleGrocery = (item) => {
@@ -855,8 +869,8 @@
                     <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">
                       {(selectedLogDay || today) === today ? "Today's Log" : `${selectedLogDay}'s Log`}
                     </h3>
-                    {(selectedLogDay || today) === today && (
-                      <button onClick={logProgress} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
+                    {loggedDays[selectedLogDay || today] === false && (
+                      <button onClick={() => logProgress(selectedLogDay || today)} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
                         LOG IT
                       </button>
                     )}
