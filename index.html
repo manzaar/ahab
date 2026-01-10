@@ -111,6 +111,24 @@
       return <span className="text-red-400 text-lg">{days}</span>;
     };
 
+    // Isolated input component - manages own state while typing, syncs on blur
+    const DebouncedInput = ({ value, onSave, placeholder, className, inputMode = 'text', pattern }) => {
+      const [localValue, setLocalValue] = useState(value || '');
+      useEffect(() => { setLocalValue(value || ''); }, [value]);
+      return (
+        <input
+          type="text"
+          inputMode={inputMode}
+          pattern={pattern}
+          placeholder={placeholder}
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onBlur={() => onSave(localValue)}
+          className={className}
+        />
+      );
+    };
+
     const AhabApp = () => {
       const [currentView, setCurrentView] = useState('home');
       const [weekData, setWeekData] = useState({});
@@ -378,13 +396,10 @@
         if (day === getTodayString()) setDayComplete(false);
       };
 
-      const updateWeight = (day, wt) => {
+      const saveWeight = (day, wt) => {
         const newData = { ...weekData, [day]: { ...weekData[day], weight: wt } };
         setWeekData(newData);
-      };
-
-      const saveWeight = (day, wt) => {
-        localStorage.setItem('weekData', JSON.stringify(weekData));
+        localStorage.setItem('weekData', JSON.stringify(newData));
         if (wt) { setCurrentWeight(wt); localStorage.setItem('currentWeight', wt); }
       };
 
@@ -736,7 +751,14 @@
                   {/* Weight Input */}
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-red-400 text-sm font-bold w-20">WEIGHT</span>
-                    <input type="text" inputMode="decimal" pattern="[0-9.]*" placeholder="LBS" value={todayData.weight || ''} onChange={(e) => updateWeight(today, e.target.value)} onBlur={(e) => saveWeight(today, e.target.value)} className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors" />
+                    <DebouncedInput
+                      value={todayData.weight}
+                      onSave={(val) => saveWeight(today, val)}
+                      placeholder="LBS"
+                      inputMode="decimal"
+                      pattern="[0-9.]*"
+                      className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors"
+                    />
                   </div>
 
                   {/* Meals - Reactor Switches */}
@@ -903,7 +925,13 @@
                             {['weight', 'sets', 'reps'].map(field => (
                               <div key={field}>
                                 <label className="text-xs text-red-500 font-bold uppercase">{field}</label>
-                                <input type="number" placeholder={field === 'weight' ? 'lbs' : '#'} value={exData[field]} onChange={(e) => updateExerciseLog(workoutDate, selectedWorkout, ex, field, e.target.value)} className="w-full bg-neutral-900 border border-red-900/30 rounded-lg px-3 py-2 text-red-400 font-bold text-sm focus:outline-none focus:border-red-600" />
+                                <DebouncedInput
+                                  value={exData[field]}
+                                  onSave={(val) => updateExerciseLog(workoutDate, selectedWorkout, ex, field, val)}
+                                  placeholder={field === 'weight' ? 'lbs' : '#'}
+                                  inputMode="numeric"
+                                  className="w-full bg-neutral-900 border border-red-900/30 rounded-lg px-3 py-2 text-red-400 font-bold text-sm focus:outline-none focus:border-red-600"
+                                />
                               </div>
                             ))}
                           </div>
@@ -979,11 +1007,23 @@
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <label className="text-xs text-yellow-600 font-bold">WEIGHT</label>
-                        <input type="number" placeholder="LBS" value={personalRecords[lift]?.weight || ''} onChange={(e) => updatePR(lift, 'weight', e.target.value)} className="w-full bg-black border border-yellow-900/50 rounded-lg px-3 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-600" />
+                        <DebouncedInput
+                          value={personalRecords[lift]?.weight}
+                          onSave={(val) => updatePR(lift, 'weight', val)}
+                          placeholder="LBS"
+                          inputMode="numeric"
+                          className="w-full bg-black border border-yellow-900/50 rounded-lg px-3 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-600"
+                        />
                       </div>
                       <div>
                         <label className="text-xs text-yellow-600 font-bold">REPS</label>
-                        <input type="number" placeholder="#" value={personalRecords[lift]?.reps || ''} onChange={(e) => updatePR(lift, 'reps', e.target.value)} className="w-full bg-black border border-yellow-900/50 rounded-lg px-3 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-600" />
+                        <DebouncedInput
+                          value={personalRecords[lift]?.reps}
+                          onSave={(val) => updatePR(lift, 'reps', val)}
+                          placeholder="#"
+                          inputMode="numeric"
+                          className="w-full bg-black border border-yellow-900/50 rounded-lg px-3 py-2 text-yellow-400 font-bold text-sm focus:outline-none focus:border-yellow-600"
+                        />
                       </div>
                       <div>
                         <label className="text-xs text-yellow-600 font-bold">DATE</label>
