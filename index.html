@@ -446,9 +446,24 @@
       const groceryWeekly = ['Eggs (2 dozen)', 'Chicken breast (3 lbs)', 'Beef (3 lbs)', 'Bananas (7-8)', 'Mixed berries (700g)', 'Broccoli (2 lbs)', 'Mixed vegetables (3 lbs)', 'Greek yogurt (1400g)'];
 
       const workouts = {
-        push: { name: 'Push', exercises: ['Bench Press', 'Overhead Press', 'Incline Dumbbell Press', 'Lateral Raises', 'Tricep Pushdowns'] },
-        pull: { name: 'Pull', exercises: ['Pull-ups', 'Barbell Rows', 'Face Pulls', 'Bicep Curls', 'Lat Pulldowns'] },
-        legs: { name: 'Legs', exercises: ['Squats', 'Romanian Deadlifts', 'Leg Press', 'Leg Curls', 'Calf Raises'] }
+        push: { name: 'Push', exercises: [
+          { name: 'Overhead Shoulder Press', target: '4x8-10' },
+          { name: 'Incline Dumbbell Bench', target: '4x8-10' },
+          { name: 'Lateral Raises', target: '3x12-15' },
+          { name: 'Overhead Tricep Extension', target: '3x10-12' }
+        ]},
+        pull: { name: 'Pull', exercises: [
+          { name: 'Pull-ups', target: '4x8-10' },
+          { name: 'Barbell Rows', target: '4x8-10' },
+          { name: 'Face Pulls', target: '3x12-15' },
+          { name: 'Bicep Curls', target: '3x10-12' }
+        ]},
+        legs: { name: 'Legs', exercises: [
+          { name: 'Deadlift', target: '4x6-8' },
+          { name: 'Leg Press', target: '4x10-12' },
+          { name: 'Bulgarian Split Squats', target: '3x10-12' },
+          { name: 'Leg Curls', target: '3x12-15' }
+        ]}
       };
 
       useEffect(() => {
@@ -1043,13 +1058,16 @@
                   <h2 className="text-xl font-black text-red-400 uppercase mb-4">{workouts[selectedWorkout].name} Day</h2>
                   <div className="space-y-3 sm:space-y-4">
                     {workouts[selectedWorkout].exercises.map((ex, i) => {
-                      const exData = getExerciseData(workoutDate, selectedWorkout, ex);
-                      const history = getWorkoutHistory(selectedWorkout, ex);
+                      const exData = getExerciseData(workoutDate, selectedWorkout, ex.name);
+                      const history = getWorkoutHistory(selectedWorkout, ex.name);
                       return (
                         <div key={i} className="p-3 sm:p-4 bg-black rounded-xl border border-red-900/20">
-                          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                            <span className="w-6 h-6 sm:w-7 sm:h-7 bg-red-600 text-white rounded-lg flex items-center justify-center text-xs sm:text-sm font-black">{i + 1}</span>
-                            <span className="font-bold text-white text-sm sm:text-base">{ex}</span>
+                          <div className="flex items-center justify-between mb-2 sm:mb-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <span className="w-6 h-6 sm:w-7 sm:h-7 bg-red-600 text-white rounded-lg flex items-center justify-center text-xs sm:text-sm font-black">{i + 1}</span>
+                              <span className="font-bold text-white text-sm sm:text-base">{ex.name}</span>
+                            </div>
+                            <span className="text-xs text-red-400 font-mono bg-red-950/50 px-2 py-1 rounded">{ex.target}</span>
                           </div>
                           <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2">
                             {['weight', 'sets', 'reps'].map(field => (
@@ -1057,7 +1075,7 @@
                                 <label className="text-[10px] sm:text-xs text-red-500 font-bold uppercase">{field}</label>
                                 <DebouncedInput
                                   value={exData[field]}
-                                  onSave={(val) => updateExerciseLog(workoutDate, selectedWorkout, ex, field, val)}
+                                  onSave={(val) => updateExerciseLog(workoutDate, selectedWorkout, ex.name, field, val)}
                                   placeholder={field === 'weight' ? 'lbs' : '#'}
                                   inputMode="numeric"
                                   className="w-full bg-neutral-900 border border-red-900/30 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-red-400 font-bold text-sm focus:outline-none focus:border-red-600"
