@@ -227,6 +227,7 @@
       const [showYum, setShowYum] = useState(false);
       const [showLogged, setShowLogged] = useState(false);
       const [dayComplete, setDayComplete] = useState(false);
+      const [selectedLogDay, setSelectedLogDay] = useState(null); // null = today
       const [calendarMonth, setCalendarMonth] = useState(new Date());
       const [calendarDayDetail, setCalendarDayDetail] = useState(null);
       const [longPressTimer, setLongPressTimer] = useState(null);
@@ -739,51 +740,87 @@
                   </div>
                 </div>
 
-                {/* Today's Log - Primary Action */}
+                {/* Daily Log - Primary Action */}
                 <Card className="border-red-700/30">
+                  {/* Day Selector */}
+                  <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+                    {days.map(day => {
+                      const isSelected = (selectedLogDay || today) === day;
+                      const isToday = day === today;
+                      return (
+                        <button
+                          key={day}
+                          onClick={() => setSelectedLogDay(day === today ? null : day)}
+                          className={`flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                            isSelected
+                              ? 'bg-red-600 text-white'
+                              : isToday
+                                ? 'bg-red-950/50 text-red-400 border border-red-700/30'
+                                : 'bg-neutral-900 text-neutral-500'
+                          }`}
+                        >
+                          {day.slice(0, 3)}
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">{today}'s Log</h3>
-                    <button onClick={logProgress} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
-                      LOG IT
-                    </button>
+                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">
+                      {(selectedLogDay || today) === today ? "Today's Log" : `${selectedLogDay}'s Log`}
+                    </h3>
+                    {(selectedLogDay || today) === today && (
+                      <button onClick={logProgress} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
+                        LOG IT
+                      </button>
+                    )}
                   </div>
 
                   {/* Weight Input */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-red-400 text-sm font-bold w-20">WEIGHT</span>
-                    <DebouncedInput
-                      value={todayData.weight}
-                      onSave={(val) => saveWeight(today, val)}
-                      placeholder="LBS"
-                      inputMode="decimal"
-                      pattern="[0-9.]*"
-                      className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors"
-                    />
-                  </div>
+                  {(() => {
+                    const editDay = selectedLogDay || today;
+                    const editData = weekData[editDay] || {};
+                    return (
+                      <>
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="text-red-400 text-sm font-bold w-20">WEIGHT</span>
+                          <DebouncedInput
+                            key={editDay}
+                            value={editData.weight}
+                            onSave={(val) => saveWeight(editDay, val)}
+                            placeholder="LBS"
+                            inputMode="decimal"
+                            pattern="[0-9.]*"
+                            className="flex-1 bg-black border border-red-900/50 rounded-xl px-4 py-2 text-red-400 font-bold placeholder-red-900 focus:outline-none focus:border-red-600 transition-colors"
+                          />
+                        </div>
 
-                  {/* Meals - Reactor Switches */}
-                  <div className="space-y-2 mb-4">
-                    <p className="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">FUEL INTAKE</p>
-                    <ReactorSwitch engaged={todayData.meal1} onToggle={() => { toggleMeal(today, 'meal1'); if (!todayData.meal1) triggerYum(); }} label="MEAL I: BREAKFAST" color="red" />
-                    <ReactorSwitch engaged={todayData.meal2} onToggle={() => { toggleMeal(today, 'meal2'); if (!todayData.meal2) triggerYum(); }} label="MEAL II: LUNCH" color="red" />
-                    <ReactorSwitch engaged={todayData.meal3} onToggle={() => { toggleMeal(today, 'meal3'); if (!todayData.meal3) triggerYum(); }} label="MEAL III: DINNER" color="red" />
-                  </div>
+                        {/* Meals - Reactor Switches */}
+                        <div className="space-y-2 mb-4">
+                          <p className="text-red-400 text-xs font-bold uppercase tracking-wider mb-2">FUEL INTAKE</p>
+                          <ReactorSwitch engaged={editData.meal1} onToggle={() => { toggleMeal(editDay, 'meal1'); if (!editData.meal1 && editDay === today) triggerYum(); }} label="MEAL I: BREAKFAST" color="red" />
+                          <ReactorSwitch engaged={editData.meal2} onToggle={() => { toggleMeal(editDay, 'meal2'); if (!editData.meal2 && editDay === today) triggerYum(); }} label="MEAL II: LUNCH" color="red" />
+                          <ReactorSwitch engaged={editData.meal3} onToggle={() => { toggleMeal(editDay, 'meal3'); if (!editData.meal3 && editDay === today) triggerYum(); }} label="MEAL III: DINNER" color="red" />
+                        </div>
 
-                  {/* Training - Reactor Switch */}
-                  <div className="mb-4">
-                    <p className="text-orange-400 text-xs font-bold uppercase tracking-wider mb-2">TRAINING</p>
-                    <ReactorSwitch engaged={todayData.training} onToggle={() => toggleMeal(today, 'training')} label="STRENGTH TRAINING" color="orange" />
-                  </div>
+                        {/* Training - Reactor Switch */}
+                        <div className="mb-4">
+                          <p className="text-orange-400 text-xs font-bold uppercase tracking-wider mb-2">TRAINING</p>
+                          <ReactorSwitch engaged={editData.training} onToggle={() => toggleMeal(editDay, 'training')} label="STRENGTH TRAINING" color="orange" />
+                        </div>
 
-                  {/* Water */}
-                  <div>
-                    <p className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">HYDRATION ({todayData.water || 0}/8)</p>
-                    <div className="flex gap-0.5 sm:gap-1">
-                      {[1,2,3,4,5,6,7,8].map(n => (
-                        <button key={n} onClick={() => updateWater(today, todayData.water === n ? 0 : n)} className={`flex-1 h-7 sm:h-8 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 ${(todayData.water || 0) >= n ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-neutral-900 text-blue-900 border border-blue-900/30'}`}>{n}</button>
-                      ))}
-                    </div>
-                  </div>
+                        {/* Water */}
+                        <div>
+                          <p className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">HYDRATION ({editData.water || 0}/8)</p>
+                          <div className="flex gap-0.5 sm:gap-1">
+                            {[1,2,3,4,5,6,7,8].map(n => (
+                              <button key={n} onClick={() => updateWater(editDay, editData.water === n ? 0 : n)} className={`flex-1 h-7 sm:h-8 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 ${(editData.water || 0) >= n ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-neutral-900 text-blue-900 border border-blue-900/30'}`}>{n}</button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </Card>
 
                 {/* Weight Progress Graph */}
