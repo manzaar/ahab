@@ -204,6 +204,7 @@
     // Isolated input component - manages own state while typing, syncs on blur
     const DebouncedInput = ({ value, onSave, onPreview, placeholder, className, inputMode = 'text', pattern }) => {
       const [localValue, setLocalValue] = useState(value || '');
+      const previewTimeoutRef = useRef(null);
       useEffect(() => { setLocalValue(value || ''); }, [value]);
       return (
         <input
@@ -214,10 +215,15 @@
           value={localValue}
           onChange={(e) => {
             setLocalValue(e.target.value);
-            if (onPreview) onPreview(e.target.value);
+            // Debounce preview updates to prevent keyboard dismissal
+            if (onPreview) {
+              if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+              previewTimeoutRef.current = setTimeout(() => onPreview(e.target.value), 300);
+            }
           }}
           onBlur={() => {
             onSave(localValue);
+            if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
             if (onPreview) onPreview(null); // Clear preview on blur
           }}
           className={className}
@@ -912,6 +918,37 @@
                   </div>
                 </div>
 
+                {/* Rank & Streak */}
+                <Card className="bg-gradient-to-br from-red-950/50 to-black border-red-700/30">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className={`text-xs font-bold tracking-wider ${theme.text}`}>RANK LEVEL {getCurrentRank().level}</p>
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <span className="text-3xl">{getCurrentRank().icon}</span>
+                        {getCurrentRank().name}
+                      </h2>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl">🔥</span>
+                        <span className="text-4xl font-black text-orange-500">{streak}</span>
+                      </div>
+                      <p className="text-xs text-red-500 font-bold">DAY STREAK</p>
+                    </div>
+                  </div>
+                  {/* XP Progress Bar */}
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className={`font-bold ${theme.text}`}>{xp} XP</span>
+                      {getNextRank() && <span className="text-red-600">NEXT: {getNextRank().name} ({getNextRank().xpRequired} XP)</span>}
+                      {!getNextRank() && <span className="text-yellow-500 font-bold">MAX RANK</span>}
+                    </div>
+                    <div className="w-full bg-red-950/50 rounded-full h-3 overflow-hidden">
+                      <div className={`bg-gradient-to-r ${theme.accent} h-3 rounded-full transition-all duration-500`} style={{ width: `${getXpProgress()}%` }} />
+                    </div>
+                  </div>
+                </Card>
+
                 {/* Daily Log - Primary Action */}
                 <Card className="border-red-700/30">
                   {/* Day Selector */}
@@ -1024,37 +1061,6 @@
                         ? `${(233 - weightHistory[weightHistory.length - 1].weight).toFixed(1)} lbs lost`
                         : 'Log weight to track'}
                     </span>
-                  </div>
-                </Card>
-
-                {/* Rank & Streak */}
-                <Card className="bg-gradient-to-br from-red-950/50 to-black border-red-700/30">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className={`text-xs font-bold tracking-wider ${theme.text}`}>RANK LEVEL {getCurrentRank().level}</p>
-                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                        <span className="text-3xl">{getCurrentRank().icon}</span>
-                        {getCurrentRank().name}
-                      </h2>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-2">
-                        <span className="text-3xl">🔥</span>
-                        <span className="text-4xl font-black text-orange-500">{streak}</span>
-                      </div>
-                      <p className="text-xs text-red-500 font-bold">DAY STREAK</p>
-                    </div>
-                  </div>
-                  {/* XP Progress Bar */}
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className={`font-bold ${theme.text}`}>{xp} XP</span>
-                      {getNextRank() && <span className="text-red-600">NEXT: {getNextRank().name} ({getNextRank().xpRequired} XP)</span>}
-                      {!getNextRank() && <span className="text-yellow-500 font-bold">MAX RANK</span>}
-                    </div>
-                    <div className="w-full bg-red-950/50 rounded-full h-3 overflow-hidden">
-                      <div className={`bg-gradient-to-r ${theme.accent} h-3 rounded-full transition-all duration-500`} style={{ width: `${getXpProgress()}%` }} />
-                    </div>
                   </div>
                 </Card>
 
