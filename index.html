@@ -662,15 +662,23 @@
         if (wt) {
           setCurrentWeight(wt);
           localStorage.setItem('currentWeight', wt);
-          // Add to weight history
-          const today = new Date().toISOString().split('T')[0];
+          // Calculate the actual date for this day of the week
+          const dayMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
+          const now = new Date();
+          const currentDayOfWeek = now.getDay();
+          const targetDayOfWeek = dayMap[day];
+          const diff = targetDayOfWeek - currentDayOfWeek;
+          const targetDate = new Date(now);
+          targetDate.setDate(now.getDate() + diff);
+          const dateString = targetDate.toISOString().split('T')[0];
+
           const numWeight = parseFloat(wt);
           if (!isNaN(numWeight)) {
             setWeightHistory(prev => {
-              // Keep starting point, filter out today's previous entry
+              // Keep starting point, filter out this date's previous entry
               const startPoint = prev.find(h => h.date === '2025-01-01') || { date: '2025-01-01', weight: 233 };
-              const filtered = prev.filter(h => h.date !== today && h.date !== '2025-01-01');
-              const updated = [startPoint, ...filtered, { date: today, weight: numWeight }].sort((a, b) => a.date.localeCompare(b.date));
+              const filtered = prev.filter(h => h.date !== dateString && h.date !== '2025-01-01');
+              const updated = [startPoint, ...filtered, { date: dateString, weight: numWeight }].sort((a, b) => a.date.localeCompare(b.date));
               localStorage.setItem('weightHistory', JSON.stringify(updated));
               return updated;
             });
