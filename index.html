@@ -724,7 +724,6 @@
                   <div className="text-6xl font-bold text-red-500 tracking-wider" style={{fontFamily: 'Orbitron, monospace', textShadow: '0 0 20px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.3)'}}>
                     <Clock />
                   </div>
-                  {/* Countdown to Sept 1, 2026 */}
                   <div className="mt-2">
                     <p className="text-red-600 text-xs font-bold tracking-wider" style={{fontFamily: 'Orbitron, monospace'}}>
                       DAYS UNTIL SEPT 1, 2026: <Countdown />
@@ -732,135 +731,8 @@
                   </div>
                 </div>
 
-                {/* Rank Display */}
-                <Card className="bg-gradient-to-br from-red-950/50 to-black border-red-700/30">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className={`text-xs font-bold tracking-wider ${theme.text}`}>RANK LEVEL {getCurrentRank().level}</p>
-                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                        <span className="text-3xl">{getCurrentRank().icon}</span>
-                        {getCurrentRank().name}
-                      </h2>
-                      <p className="text-[10px] text-neutral-500 mt-1">THEME: {theme.name}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-2">
-                        <span className="text-3xl">🔥</span>
-                        <span className="text-4xl font-black text-orange-500">{streak}</span>
-                      </div>
-                      <p className="text-xs text-red-500 font-bold">DAY STREAK</p>
-                    </div>
-                  </div>
-                  {/* XP Progress Bar */}
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className={`font-bold ${theme.text}`}>{xp} XP</span>
-                      {getNextRank() && <span className="text-red-600">NEXT: {getNextRank().name} ({getNextRank().xpRequired} XP)</span>}
-                      {!getNextRank() && <span className="text-yellow-500 font-bold">MAX RANK</span>}
-                    </div>
-                    <div className="w-full bg-red-950/50 rounded-full h-3 overflow-hidden">
-                      <div className={`bg-gradient-to-r ${theme.accent} h-3 rounded-full transition-all duration-500`} style={{ width: `${getXpProgress()}%` }} />
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Weight Progress Graph */}
-                <Card>
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">WEIGHT JOURNEY</h3>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="text-red-400/70">START: 233</span>
-                      <span className="text-green-400/70">GOAL: 190</span>
-                    </div>
-                  </div>
-                  <WeightGraph history={weightHistory} startWeight={233} goalWeight={190} />
-                  <div className="flex justify-between items-center mt-2 text-xs">
-                    <span className="text-neutral-500">{weightHistory.length} entries</span>
-                    <span className="text-red-400 font-bold">
-                      {weightHistory.length > 1 ? `${(233 - weightHistory[weightHistory.length - 1].weight).toFixed(1)} lbs lost` : 'Log weight to track'}
-                    </span>
-                  </div>
-                </Card>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Card>
-                    <div className="relative">
-                      <p className="absolute text-3xl font-black text-neutral-800 opacity-30">{lastWeekStats.workoutsHit}/7</p>
-                      <p className="text-3xl font-black text-red-500 relative">{weeklyStats.workoutsHit}/7</p>
-                    </div>
-                    <p className="text-xs text-red-400/70 font-bold uppercase">WORKOUTS</p>
-                  </Card>
-                  <Card>
-                    <div className="relative">
-                      <p className="absolute text-3xl font-black text-neutral-800 opacity-30">{lastWeekStats.mealsHit}/21</p>
-                      <p className="text-3xl font-black text-red-500 relative">{weeklyStats.mealsHit}/21</p>
-                    </div>
-                    <p className="text-xs text-red-400/70 font-bold uppercase">MEALS</p>
-                  </Card>
-                  <Card>
-                    <div className="relative">
-                      <p className="absolute text-3xl font-black text-neutral-800 opacity-30">{lastWeekStats.consistency}%</p>
-                      <p className="text-3xl font-black text-red-500 relative">{weeklyStats.consistency}%</p>
-                    </div>
-                    <p className="text-xs text-red-400/70 font-bold uppercase">CONSISTENCY</p>
-                  </Card>
-                  <Card>
-                    <p className="text-3xl font-black text-blue-400">{weeklyStats.waterTotal}</p>
-                    <p className="text-xs text-blue-400/70 font-bold uppercase">WATER</p>
-                  </Card>
-                </div>
-
-                {/* VS Last Week */}
-                <Card className="border-purple-900/30">
-                  <h3 className="text-sm font-bold text-purple-400 uppercase tracking-wider mb-3">⚔️ VS LAST WEEK</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-neutral-400">WORKOUTS</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{weeklyStats.workoutsHit}</span>
-                        <span className="text-neutral-600">vs</span>
-                        <span className="text-sm text-neutral-500">{lastWeekStats.workoutsHit}</span>
-                        {weeklyStats.workoutsHit > lastWeekStats.workoutsHit && <span className="text-green-500 font-bold">▲</span>}
-                        {weeklyStats.workoutsHit < lastWeekStats.workoutsHit && <span className="text-red-500 font-bold">▼</span>}
-                        {weeklyStats.workoutsHit === lastWeekStats.workoutsHit && <span className="text-neutral-600">—</span>}
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-neutral-400">MEALS</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{weeklyStats.mealsHit}</span>
-                        <span className="text-neutral-600">vs</span>
-                        <span className="text-sm text-neutral-500">{lastWeekStats.mealsHit}</span>
-                        {weeklyStats.mealsHit > lastWeekStats.mealsHit && <span className="text-green-500 font-bold">▲</span>}
-                        {weeklyStats.mealsHit < lastWeekStats.mealsHit && <span className="text-red-500 font-bold">▼</span>}
-                        {weeklyStats.mealsHit === lastWeekStats.mealsHit && <span className="text-neutral-600">—</span>}
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-neutral-400">CONSISTENCY</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{weeklyStats.consistency}%</span>
-                        <span className="text-neutral-600">vs</span>
-                        <span className="text-sm text-neutral-500">{lastWeekStats.consistency}%</span>
-                        {weeklyStats.consistency > lastWeekStats.consistency && <span className="text-green-500 font-bold">▲</span>}
-                        {weeklyStats.consistency < lastWeekStats.consistency && <span className="text-red-500 font-bold">▼</span>}
-                        {weeklyStats.consistency === lastWeekStats.consistency && <span className="text-neutral-600">—</span>}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }} className="bg-gradient-to-r from-orange-950/50 to-black border-orange-700/30">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-xs text-orange-500 font-bold tracking-wider">NEXT UP</p>
-                      <p className="text-xl font-black text-orange-400">{workouts[nextWorkout].name.toUpperCase()} DAY</p>
-                    </div>
-                    <span className="text-orange-500 text-2xl">→</span>
-                  </div>
-                </Card>
-
-                <Card>
+                {/* Today's Log - Primary Action */}
+                <Card className="border-red-700/30">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">{today}'s Log</h3>
                     <button onClick={logProgress} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
@@ -896,7 +768,7 @@
                   </div>
 
                   {/* Water */}
-                  <div className="mb-4">
+                  <div>
                     <p className="text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">HYDRATION ({todayData.water || 0}/8)</p>
                     <div className="flex gap-0.5 sm:gap-1">
                       {[1,2,3,4,5,6,7,8].map(n => (
@@ -906,39 +778,122 @@
                   </div>
                 </Card>
 
+                {/* Weight Progress Graph */}
+                <Card>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">WEIGHT JOURNEY</h3>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-red-400/70">233</span>
+                      <span className="text-neutral-600">→</span>
+                      <span className="text-green-400/70">190</span>
+                    </div>
+                  </div>
+                  <WeightGraph history={weightHistory} startWeight={233} goalWeight={190} />
+                  <div className="flex justify-between items-center mt-2 text-xs">
+                    <span className="text-neutral-500">{weightHistory.length} entries</span>
+                    <span className="text-red-400 font-bold">
+                      {weightHistory.length > 0 && weightHistory[weightHistory.length - 1].weight < 233
+                        ? `${(233 - weightHistory[weightHistory.length - 1].weight).toFixed(1)} lbs lost`
+                        : 'Log weight to track'}
+                    </span>
+                  </div>
+                </Card>
+
+                {/* Rank & Streak */}
+                <Card className="bg-gradient-to-br from-red-950/50 to-black border-red-700/30">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className={`text-xs font-bold tracking-wider ${theme.text}`}>RANK LEVEL {getCurrentRank().level}</p>
+                      <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                        <span className="text-3xl">{getCurrentRank().icon}</span>
+                        {getCurrentRank().name}
+                      </h2>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl">🔥</span>
+                        <span className="text-4xl font-black text-orange-500">{streak}</span>
+                      </div>
+                      <p className="text-xs text-red-500 font-bold">DAY STREAK</p>
+                    </div>
+                  </div>
+                  {/* XP Progress Bar */}
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className={`font-bold ${theme.text}`}>{xp} XP</span>
+                      {getNextRank() && <span className="text-red-600">NEXT: {getNextRank().name} ({getNextRank().xpRequired} XP)</span>}
+                      {!getNextRank() && <span className="text-yellow-500 font-bold">MAX RANK</span>}
+                    </div>
+                    <div className="w-full bg-red-950/50 rounded-full h-3 overflow-hidden">
+                      <div className={`bg-gradient-to-r ${theme.accent} h-3 rounded-full transition-all duration-500`} style={{ width: `${getXpProgress()}%` }} />
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-4 gap-2">
+                  <Card className="text-center">
+                    <p className="text-2xl font-black text-red-500">{weeklyStats.workoutsHit}</p>
+                    <p className="text-[10px] text-red-400/70 font-bold uppercase">WORKOUTS</p>
+                  </Card>
+                  <Card className="text-center">
+                    <p className="text-2xl font-black text-red-500">{weeklyStats.mealsHit}</p>
+                    <p className="text-[10px] text-red-400/70 font-bold uppercase">MEALS</p>
+                  </Card>
+                  <Card className="text-center">
+                    <p className="text-2xl font-black text-red-500">{weeklyStats.consistency}%</p>
+                    <p className="text-[10px] text-red-400/70 font-bold uppercase">HIT RATE</p>
+                  </Card>
+                  <Card className="text-center">
+                    <p className="text-2xl font-black text-blue-400">{weeklyStats.waterTotal}</p>
+                    <p className="text-[10px] text-blue-400/70 font-bold uppercase">WATER</p>
+                  </Card>
+                </div>
+
+                {/* Next Workout */}
+                <Card onClick={() => { setSelectedWorkout(nextWorkout); setCurrentView('workouts'); }} className="bg-gradient-to-r from-orange-950/50 to-black border-orange-700/30">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-xs text-orange-500 font-bold tracking-wider">NEXT UP</p>
+                      <p className="text-xl font-black text-orange-400">{workouts[nextWorkout].name.toUpperCase()} DAY</p>
+                    </div>
+                    <span className="text-orange-500 text-2xl">→</span>
+                  </div>
+                </Card>
+
                 {/* Weekly Overview */}
                 <Card>
-                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-4">WEEKLY OVERVIEW</h3>
-                  <div className="space-y-2">
+                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">THIS WEEK</h3>
+                  <div className="space-y-1.5">
                     {days.map(day => {
                       const dayData = weekData[day] || {};
                       const isToday = day === today;
-                      const mealsCount = (dayData.meal1 ? 1 : 0) + (dayData.meal2 ? 1 : 0) + (dayData.meal3 ? 1 : 0);
                       return (
-                        <div key={day} className={`flex items-center gap-2 p-2 rounded-xl transition-all ${isToday ? 'bg-red-950/30 border border-red-700/30' : ''}`}>
-                          <span className={`w-10 text-xs font-bold flex-shrink-0 ${isToday ? 'text-red-400' : 'text-red-600'}`}>{day.slice(0, 3).toUpperCase()}</span>
-                          <div className="flex gap-1 flex-shrink-0">
+                        <div key={day} className={`flex items-center gap-2 p-1.5 rounded-lg transition-all ${isToday ? 'bg-red-950/30 border border-red-700/30' : ''}`}>
+                          <span className={`w-8 text-[10px] font-bold flex-shrink-0 ${isToday ? 'text-red-400' : 'text-red-600'}`}>{day.slice(0, 3).toUpperCase()}</span>
+                          <div className="flex gap-0.5 flex-shrink-0">
                             {[dayData.meal1, dayData.meal2, dayData.meal3].map((m, i) => (
-                              <div key={i} className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center text-[10px] sm:text-xs font-bold ${m ? 'bg-red-600 text-white' : 'bg-neutral-900 border border-red-900/20 text-red-900'}`}>
-                                {m ? '✓' : i + 1}
+                              <div key={i} className={`w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold ${m ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-900'}`}>
+                                {m ? '✓' : ''}
                               </div>
                             ))}
-                            <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center text-[10px] sm:text-xs font-bold ${dayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-900 border border-orange-900/20 text-orange-900'}`}>
-                              {dayData.training ? '✓' : 'G'}
+                            <div className={`w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold ${dayData.training ? 'bg-orange-600 text-white' : 'bg-neutral-900 text-orange-900'}`}>
+                              {dayData.training ? '✓' : ''}
                             </div>
                           </div>
-                          <div className="flex gap-0.5 flex-1 justify-center">
+                          <div className="flex gap-0.5 flex-1">
                             {[1,2,3,4,5,6,7,8].map(n => (
-                              <div key={n} className={`w-1.5 sm:w-2 h-3 sm:h-4 rounded-sm ${(dayData.water || 0) >= n ? 'bg-blue-500' : 'bg-neutral-800'}`}></div>
+                              <div key={n} className={`w-1 h-2.5 rounded-sm ${(dayData.water || 0) >= n ? 'bg-blue-500' : 'bg-neutral-800'}`}></div>
                             ))}
                           </div>
-                          {dayData.weight && <span className="text-[10px] sm:text-xs text-red-400 font-bold w-10 text-right flex-shrink-0">{dayData.weight}</span>}
+                          {dayData.weight && <span className="text-[9px] text-red-400 font-bold w-8 text-right flex-shrink-0">{dayData.weight}</span>}
                         </div>
                       );
                     })}
                   </div>
                 </Card>
 
+                {/* Progress Milestones */}
                 <div className="flex justify-between px-1">
                   {[10, 25, 50, 75, 100].map(m => (
                     <div key={m} className="text-center">
