@@ -482,7 +482,35 @@
 
       const triggerYum = () => { setShowYum(true); setTimeout(() => setShowYum(false), 1000); };
 
-      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      // Helper to get current week's dates (Monday-Sunday)
+      const getCurrentWeekDates = () => {
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 = Sunday
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          dates.push(d.toISOString().split('T')[0]);
+        }
+        return dates;
+      };
+
+      // Format date for display (e.g., "Mon 1/13")
+      const formatDateShort = (dateStr) => {
+        const d = new Date(dateStr + 'T00:00:00');
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return `${days[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
+      };
+
+      // Get day name from date
+      const getDayName = (dateStr) => {
+        const d = new Date(dateStr + 'T00:00:00');
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return days[d.getDay()];
+      };
 
       const animeQuotes = [
         { quote: "I am the hope of the universe. I am the answer to all living things that cry out for peace!", char: "Goku" },
@@ -540,8 +568,7 @@
       const currentQuote = animeQuotes[quoteIndex];
 
       const getTodayString = () => {
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        return dayNames[new Date().getDay()];
+        return new Date().toISOString().split('T')[0];
       };
 
       useEffect(() => {
@@ -597,11 +624,7 @@
       useEffect(() => {
         const saved = localStorage.getItem('weekData');
         if (saved) setWeekData(JSON.parse(saved));
-        else {
-          const init = {};
-          days.forEach(d => { init[d] = { meal1: false, meal2: false, meal3: false, training: false, cardio1: false, cardio2: false, weight: '', water: 0 }; });
-          setWeekData(init);
-        }
+        // No need to pre-initialize - entries are created on demand by date
         const w = localStorage.getItem('currentWeight'); if (w) setCurrentWeight(w);
         const g = localStorage.getItem('grocery'); if (g) setGroceryChecked(JSON.parse(g));
         const wl = localStorage.getItem('workouts'); if (wl) setWorkoutLog(JSON.parse(wl));
@@ -654,6 +677,7 @@
       };
 
       const saveWeight = (day, wt) => {
+        // day is now a date string (YYYY-MM-DD)
         const newData = { ...weekData, [day]: { ...weekData[day], weight: wt } };
         setWeekData(newData);
         localStorage.setItem('weekData', JSON.stringify(newData));
@@ -662,23 +686,14 @@
         if (wt) {
           setCurrentWeight(wt);
           localStorage.setItem('currentWeight', wt);
-          // Calculate the actual date for this day of the week
-          const dayMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
-          const now = new Date();
-          const currentDayOfWeek = now.getDay();
-          const targetDayOfWeek = dayMap[day];
-          const diff = targetDayOfWeek - currentDayOfWeek;
-          const targetDate = new Date(now);
-          targetDate.setDate(now.getDate() + diff);
-          const dateString = targetDate.toISOString().split('T')[0];
 
           const numWeight = parseFloat(wt);
           if (!isNaN(numWeight)) {
             setWeightHistory(prev => {
               // Keep starting point, filter out this date's previous entry
               const startPoint = prev.find(h => h.date === '2025-01-01') || { date: '2025-01-01', weight: 233 };
-              const filtered = prev.filter(h => h.date !== dateString && h.date !== '2025-01-01');
-              const updated = [startPoint, ...filtered, { date: dateString, weight: numWeight }].sort((a, b) => a.date.localeCompare(b.date));
+              const filtered = prev.filter(h => h.date !== day && h.date !== '2025-01-01');
+              const updated = [startPoint, ...filtered, { date: day, weight: numWeight }].sort((a, b) => a.date.localeCompare(b.date));
               localStorage.setItem('weightHistory', JSON.stringify(updated));
               return updated;
             });
@@ -739,14 +754,14 @@
         const year = calendarMonth.getFullYear();
         const month = calendarMonth.getMonth();
         const dateObj = new Date(year, month, day);
-        const today = new Date();
-        today.setHours(0,0,0,0);
+        const todayDate = new Date();
+        todayDate.setHours(0,0,0,0);
 
-        if (dateObj > today) return 'future';
+        if (dateObj > todayDate) return 'future';
 
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dayName = dayNames[dateObj.getDay()];
-        const data = weekData[dayName] || {};
+        // Look up by actual date string (YYYY-MM-DD)
+        const dateStr = dateObj.toISOString().split('T')[0];
+        const data = weekData[dateStr] || {};
 
         const meals = (data.meal1 ? 1 : 0) + (data.meal2 ? 1 : 0) + (data.meal3 ? 1 : 0);
         const training = data.training ? 1 : 0;
@@ -789,24 +804,36 @@
 
       const getWeeklyStats = () => {
         let mealsHit = 0, totalMeals = 0, workoutsHit = 0, waterTotal = 0;
-        days.forEach(d => {
+        const weekDates = getCurrentWeekDates();
+        weekDates.forEach(d => {
           if (weekData[d]) {
             if (weekData[d].meal1) mealsHit++; if (weekData[d].meal2) mealsHit++; if (weekData[d].meal3) mealsHit++;
             totalMeals += 3; if (weekData[d].training) workoutsHit++; waterTotal += weekData[d].water || 0;
+          } else {
+            totalMeals += 3; // Still count as potential meals
           }
         });
         return { mealsHit, workoutsHit, consistency: totalMeals > 0 ? Math.round((mealsHit / totalMeals) * 100) : 0, waterTotal };
       };
 
       const getLastWeekStats = () => {
-        const lastWeek = JSON.parse(localStorage.getItem('lastWeekData') || '{}');
+        // Get last week's dates
+        const today = new Date();
+        const lastWeekDates = [];
+        for (let i = 7; i <= 13; i++) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
+          lastWeekDates.push(d.toISOString().split('T')[0]);
+        }
+
         let mealsHit = 0, workoutsHit = 0;
-        days.forEach(d => {
-          if (lastWeek[d]) {
-            if (lastWeek[d].meal1) mealsHit++;
-            if (lastWeek[d].meal2) mealsHit++;
-            if (lastWeek[d].meal3) mealsHit++;
-            if (lastWeek[d].training) workoutsHit++;
+        lastWeekDates.forEach(dateStr => {
+          const data = weekData[dateStr];
+          if (data) {
+            if (data.meal1) mealsHit++;
+            if (data.meal2) mealsHit++;
+            if (data.meal3) mealsHit++;
+            if (data.training) workoutsHit++;
           }
         });
         return { mealsHit, workoutsHit, consistency: Math.round((mealsHit / 21) * 100) };
@@ -814,11 +841,18 @@
 
       const getStreak = () => {
         let streak = 0;
-        const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const todayIdx = new Date().getDay();
-        for (let i = 0; i <= todayIdx; i++) {
-          const d = dayOrder[i];
-          if (weekData[d] && (weekData[d].meal1 || weekData[d].meal2 || weekData[d].meal3 || weekData[d].training)) streak++;
+        const today = new Date();
+        // Count backwards from today
+        for (let i = 0; i < 365; i++) { // Check up to a year back
+          const checkDate = new Date(today);
+          checkDate.setDate(today.getDate() - i);
+          const dateStr = checkDate.toISOString().split('T')[0];
+          const data = weekData[dateStr];
+          if (data && (data.meal1 || data.meal2 || data.meal3 || data.training)) {
+            streak++;
+          } else if (i > 0) { // Allow today to be incomplete
+            break;
+          }
         }
         return streak;
       };
@@ -952,15 +986,15 @@
 
                 {/* Daily Log - Primary Action */}
                 <Card className="border-red-700/30">
-                  {/* Day Selector */}
+                  {/* Day Selector - Shows current week's dates */}
                   <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
-                    {days.map(day => {
-                      const isSelected = (selectedLogDay || today) === day;
-                      const isToday = day === today;
+                    {getCurrentWeekDates().map(dateStr => {
+                      const isSelected = (selectedLogDay || today) === dateStr;
+                      const isToday = dateStr === today;
                       return (
                         <button
-                          key={day}
-                          onClick={() => setSelectedLogDay(day === today ? null : day)}
+                          key={dateStr}
+                          onClick={() => setSelectedLogDay(dateStr === today ? null : dateStr)}
                           className={`flex-shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
                             isSelected
                               ? 'bg-red-600 text-white'
@@ -969,7 +1003,7 @@
                                 : 'bg-neutral-900 text-neutral-500'
                           }`}
                         >
-                          {day.slice(0, 3)}
+                          {getDayName(dateStr)}
                         </button>
                       );
                     })}
@@ -977,7 +1011,7 @@
 
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">
-                      {(selectedLogDay || today) === today ? "Today's Log" : `${selectedLogDay}'s Log`}
+                      {(selectedLogDay || today) === today ? "Today's Log" : formatDateShort(selectedLogDay)}
                     </h3>
                     {loggedDays[selectedLogDay || today] !== true && (
                       <button onClick={() => logProgress(selectedLogDay || today)} className="bg-gradient-to-r from-green-600 to-green-500 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-green-900/30 hover:from-green-500 hover:to-green-400 transition-all active:scale-95">
@@ -1099,12 +1133,12 @@
                 <Card>
                   <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">THIS WEEK</h3>
                   <div className="space-y-1.5">
-                    {days.map(day => {
-                      const dayData = weekData[day] || {};
-                      const isToday = day === today;
+                    {getCurrentWeekDates().map(dateStr => {
+                      const dayData = weekData[dateStr] || {};
+                      const isToday = dateStr === today;
                       return (
-                        <div key={day} className={`flex items-center gap-2 p-1.5 rounded-lg transition-all ${isToday ? 'bg-red-950/30 border border-red-700/30' : ''}`}>
-                          <span className={`w-8 text-[10px] font-bold flex-shrink-0 ${isToday ? 'text-red-400' : 'text-red-600'}`}>{day.slice(0, 3).toUpperCase()}</span>
+                        <div key={dateStr} className={`flex items-center gap-2 p-1.5 rounded-lg transition-all ${isToday ? 'bg-red-950/30 border border-red-700/30' : ''}`}>
+                          <span className={`w-8 text-[10px] font-bold flex-shrink-0 ${isToday ? 'text-red-400' : 'text-red-600'}`}>{getDayName(dateStr).toUpperCase()}</span>
                           <div className="flex gap-0.5 flex-shrink-0">
                             {[dayData.meal1, dayData.meal2, dayData.meal3].map((m, i) => (
                               <div key={i} className={`w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold ${m ? 'bg-red-600 text-white' : 'bg-neutral-900 text-red-900'}`}>
@@ -1496,10 +1530,9 @@
                           <button onClick={() => setCalendarDayDetail(null)} className="text-neutral-500 hover:text-white text-xl">×</button>
                         </div>
                         {(() => {
-                          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                           const dateObj = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), calendarDayDetail);
-                          const dayName = dayNames[dateObj.getDay()];
-                          const data = weekData[dayName] || {};
+                          const dateStr = dateObj.toISOString().split('T')[0];
+                          const data = weekData[dateStr] || {};
                           return (
                             <div className="space-y-3">
                               <div className="flex justify-between items-center">
