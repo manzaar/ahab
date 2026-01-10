@@ -87,6 +87,30 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
+    // Separate Clock component to avoid re-rendering entire app every second
+    const Clock = () => {
+      const [time, setTime] = useState(new Date());
+      useEffect(() => {
+        const interval = setInterval(() => setTime(new Date()), 1000);
+        return () => clearInterval(interval);
+      }, []);
+      return (
+        <span>{time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace(' ', '')}</span>
+      );
+    };
+
+    // Separate Countdown component
+    const Countdown = () => {
+      const [days, setDays] = useState(Math.max(0, Math.ceil((new Date('2026-09-01') - new Date()) / (1000 * 60 * 60 * 24))));
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setDays(Math.max(0, Math.ceil((new Date('2026-09-01') - new Date()) / (1000 * 60 * 60 * 24))));
+        }, 60000); // Update every minute is fine for day countdown
+        return () => clearInterval(interval);
+      }, []);
+      return <span className="text-red-400 text-lg">{days}</span>;
+    };
+
     const AhabApp = () => {
       const [currentView, setCurrentView] = useState('home');
       const [weekData, setWeekData] = useState({});
@@ -107,7 +131,6 @@
       const [showYum, setShowYum] = useState(false);
       const [showLogged, setShowLogged] = useState(false);
       const [dayComplete, setDayComplete] = useState(false);
-      const [currentTime, setCurrentTime] = useState(new Date());
       const [calendarMonth, setCalendarMonth] = useState(new Date());
       const [calendarDayDetail, setCalendarDayDetail] = useState(null);
       const [longPressTimer, setLongPressTimer] = useState(null);
@@ -303,10 +326,6 @@
         return () => clearInterval(cycleQuotes);
       }, []);
 
-      useEffect(() => {
-        const clockInterval = setInterval(() => setCurrentTime(new Date()), 1000);
-        return () => clearInterval(clockInterval);
-      }, []);
 
 
       // Progressive reward themes based on rank
@@ -586,12 +605,12 @@
                 {/* Digital Clock */}
                 <div className="text-center py-2">
                   <div className="text-6xl font-bold text-red-500 tracking-wider" style={{fontFamily: 'Orbitron, monospace', textShadow: '0 0 20px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.3)'}}>
-                    {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).replace(' ', '')}
+                    <Clock />
                   </div>
                   {/* Countdown to Sept 1, 2026 */}
                   <div className="mt-2">
                     <p className="text-red-600 text-xs font-bold tracking-wider" style={{fontFamily: 'Orbitron, monospace'}}>
-                      DAYS UNTIL SEPT 1, 2026: <span className="text-red-400 text-lg">{Math.max(0, Math.ceil((new Date('2026-09-01') - currentTime) / (1000 * 60 * 60 * 24)))}</span>
+                      DAYS UNTIL SEPT 1, 2026: <Countdown />
                     </p>
                   </div>
                 </div>
