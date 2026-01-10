@@ -228,6 +228,77 @@
       const [showLogged, setShowLogged] = useState(false);
       const [dayComplete, setDayComplete] = useState(false);
       const [selectedLogDay, setSelectedLogDay] = useState(null); // null = today
+      const [showSyncModal, setShowSyncModal] = useState(false);
+      const [syncCode, setSyncCode] = useState('');
+      const [syncStatus, setSyncStatus] = useState('');
+
+      // Export all data as JSON string
+      const exportData = () => {
+        const data = {
+          weekData,
+          currentWeight,
+          weightHistory,
+          workoutLog,
+          personalRecords,
+          xp,
+          groceryChecked,
+          exportDate: new Date().toISOString()
+        };
+        const jsonString = JSON.stringify(data);
+        // Convert to base64 for easier copying
+        const encoded = btoa(jsonString);
+        setSyncCode(encoded);
+        setSyncStatus('Data exported! Copy the code below.');
+      };
+
+      // Import data from JSON string
+      const importData = () => {
+        try {
+          const decoded = atob(syncCode);
+          const data = JSON.parse(decoded);
+
+          // Validate it has expected structure
+          if (!data.weekData && !data.weightHistory) {
+            setSyncStatus('Invalid data format');
+            return;
+          }
+
+          // Import each piece of data
+          if (data.weekData) {
+            setWeekData(data.weekData);
+            localStorage.setItem('weekData', JSON.stringify(data.weekData));
+          }
+          if (data.currentWeight) {
+            setCurrentWeight(data.currentWeight);
+            localStorage.setItem('currentWeight', data.currentWeight);
+          }
+          if (data.weightHistory) {
+            setWeightHistory(data.weightHistory);
+            localStorage.setItem('weightHistory', JSON.stringify(data.weightHistory));
+          }
+          if (data.workoutLog) {
+            setWorkoutLog(data.workoutLog);
+            localStorage.setItem('workouts', JSON.stringify(data.workoutLog));
+          }
+          if (data.personalRecords) {
+            setPersonalRecords(data.personalRecords);
+            localStorage.setItem('personalRecords', JSON.stringify(data.personalRecords));
+          }
+          if (typeof data.xp === 'number') {
+            setXp(data.xp);
+            localStorage.setItem('xp', data.xp.toString());
+          }
+          if (data.groceryChecked) {
+            setGroceryChecked(data.groceryChecked);
+            localStorage.setItem('grocery', JSON.stringify(data.groceryChecked));
+          }
+
+          setSyncStatus('Data imported successfully!');
+          setSyncCode('');
+        } catch (e) {
+          setSyncStatus('Error: Invalid sync code');
+        }
+      };
       const [calendarMonth, setCalendarMonth] = useState(new Date());
       const [calendarDayDetail, setCalendarDayDetail] = useState(null);
       const [longPressTimer, setLongPressTimer] = useState(null);
@@ -973,6 +1044,73 @@
                     </div>
                   ))}
                 </div>
+
+                {/* Sync Button */}
+                <button
+                  onClick={() => { setShowSyncModal(true); setSyncStatus(''); setSyncCode(''); }}
+                  className="w-full mt-4 py-3 bg-neutral-900 border border-neutral-800 rounded-xl text-neutral-500 text-sm font-bold uppercase tracking-wider hover:border-red-700/50 hover:text-red-400 transition-all"
+                >
+                  🔄 Sync Data
+                </button>
+
+                {/* Sync Modal */}
+                {showSyncModal && (
+                  <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4" onClick={() => setShowSyncModal(false)}>
+                    <div className="bg-neutral-900 rounded-2xl p-5 max-w-sm w-full border border-red-900/30" onClick={e => e.stopPropagation()}>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-black text-red-400 uppercase tracking-wider">SYNC DATA</h3>
+                        <button onClick={() => setShowSyncModal(false)} className="text-neutral-500 hover:text-white text-2xl">×</button>
+                      </div>
+
+                      <p className="text-neutral-400 text-xs mb-4">Export your data on one device, then import it on another to sync.</p>
+
+                      {/* Export Button */}
+                      <button
+                        onClick={exportData}
+                        className="w-full py-3 bg-gradient-to-r from-green-700 to-green-600 text-white rounded-xl text-sm font-bold uppercase tracking-wider mb-3 hover:from-green-600 hover:to-green-500 transition-all"
+                      >
+                        📤 Export My Data
+                      </button>
+
+                      {/* Code Text Area */}
+                      <textarea
+                        value={syncCode}
+                        onChange={(e) => setSyncCode(e.target.value)}
+                        placeholder="Paste sync code here to import..."
+                        className="w-full h-24 bg-black border border-red-900/50 rounded-xl px-3 py-2 text-red-400 text-xs font-mono placeholder-red-900 focus:outline-none focus:border-red-600 resize-none mb-3"
+                      />
+
+                      {/* Import Button */}
+                      <button
+                        onClick={importData}
+                        disabled={!syncCode}
+                        className={`w-full py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${syncCode ? 'bg-gradient-to-r from-blue-700 to-blue-600 text-white hover:from-blue-600 hover:to-blue-500' : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'}`}
+                      >
+                        📥 Import Data
+                      </button>
+
+                      {/* Status Message */}
+                      {syncStatus && (
+                        <p className={`mt-3 text-xs font-bold text-center ${syncStatus.includes('Error') || syncStatus.includes('Invalid') ? 'text-red-500' : 'text-green-400'}`}>
+                          {syncStatus}
+                        </p>
+                      )}
+
+                      {/* Copy Helper */}
+                      {syncCode && syncStatus.includes('exported') && (
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(syncCode);
+                            setSyncStatus('Copied to clipboard!');
+                          }}
+                          className="w-full mt-2 py-2 bg-neutral-800 text-neutral-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-neutral-700 transition-all"
+                        >
+                          📋 Copy to Clipboard
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
