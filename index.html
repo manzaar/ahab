@@ -115,6 +115,87 @@
       return <span className="text-red-400 text-lg">{days}</span>;
     };
 
+    // Weight Graph Component
+    const WeightGraph = ({ history, startWeight = 233, goalWeight = 190 }) => {
+      if (!history || history.length < 1) return null;
+
+      const width = 300;
+      const height = 150;
+      const padding = { top: 20, right: 15, bottom: 25, left: 35 };
+      const graphWidth = width - padding.left - padding.right;
+      const graphHeight = height - padding.top - padding.bottom;
+
+      // Get min/max for scale
+      const weights = history.map(h => h.weight);
+      const minWeight = Math.min(goalWeight, ...weights) - 5;
+      const maxWeight = Math.max(startWeight, ...weights) + 5;
+      const weightRange = maxWeight - minWeight;
+
+      // Calculate positions
+      const points = history.map((h, i) => ({
+        x: padding.left + (history.length === 1 ? graphWidth / 2 : (i / (history.length - 1)) * graphWidth),
+        y: padding.top + ((maxWeight - h.weight) / weightRange) * graphHeight,
+        weight: h.weight,
+        date: h.date
+      }));
+
+      // Create path
+      const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+      // Goal line Y position
+      const goalY = padding.top + ((maxWeight - goalWeight) / weightRange) * graphHeight;
+      const startY = padding.top + ((maxWeight - startWeight) / weightRange) * graphHeight;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => (
+            <line key={i} x1={padding.left} y1={padding.top + pct * graphHeight} x2={width - padding.right} y2={padding.top + pct * graphHeight} stroke="#1f1f1f" strokeWidth="1" />
+          ))}
+
+          {/* Start weight line */}
+          <line x1={padding.left} y1={startY} x2={width - padding.right} y2={startY} stroke="#ef4444" strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />
+          <text x={padding.left - 5} y={startY + 4} textAnchor="end" fill="#ef4444" fontSize="9" opacity="0.7">233</text>
+
+          {/* Goal line */}
+          <line x1={padding.left} y1={goalY} x2={width - padding.right} y2={goalY} stroke="#22c55e" strokeWidth="1" strokeDasharray="4,4" />
+          <text x={padding.left - 5} y={goalY + 4} textAnchor="end" fill="#22c55e" fontSize="9">190</text>
+
+          {/* Weight line */}
+          <path d={linePath} fill="none" stroke="url(#weightGradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* Gradient definition */}
+          <defs>
+            <linearGradient id="weightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ef4444" />
+              <stop offset="100%" stopColor="#f97316" />
+            </linearGradient>
+          </defs>
+
+          {/* Data points */}
+          {points.map((p, i) => (
+            <g key={i}>
+              <circle cx={p.x} cy={p.y} r="4" fill="#ef4444" stroke="#000" strokeWidth="1" />
+              {/* Show weight on last point */}
+              {i === points.length - 1 && (
+                <text x={p.x} y={p.y - 8} textAnchor="middle" fill="#f97316" fontSize="10" fontWeight="bold">{p.weight}</text>
+              )}
+            </g>
+          ))}
+
+          {/* X-axis labels - first and last date */}
+          {history.length > 0 && (
+            <>
+              <text x={padding.left} y={height - 5} textAnchor="start" fill="#666" fontSize="8">{history[0].date.slice(5)}</text>
+              {history.length > 1 && (
+                <text x={width - padding.right} y={height - 5} textAnchor="end" fill="#666" fontSize="8">{history[history.length - 1].date.slice(5)}</text>
+              )}
+            </>
+          )}
+        </svg>
+      );
+    };
+
     // Isolated input component - manages own state while typing, syncs on blur
     const DebouncedInput = ({ value, onSave, placeholder, className, inputMode = 'text', pattern }) => {
       const [localValue, setLocalValue] = useState(value || '');
@@ -157,6 +238,7 @@
       const [calendarDayDetail, setCalendarDayDetail] = useState(null);
       const [longPressTimer, setLongPressTimer] = useState(null);
       const [xp, setXp] = useState(0);
+      const [weightHistory, setWeightHistory] = useState([{ date: '2025-01-01', weight: 233 }]);
 
       // Reactor Switch Component
       const ReactorSwitch = ({ engaged, onToggle, label, color = 'red' }) => {
@@ -388,6 +470,8 @@
         const wl = localStorage.getItem('workouts'); if (wl) setWorkoutLog(JSON.parse(wl));
         const savedXp = localStorage.getItem('xp'); if (savedXp) setXp(parseInt(savedXp));
         const savedPRs = localStorage.getItem('personalRecords'); if (savedPRs) setPersonalRecords(JSON.parse(savedPRs));
+        const savedWeightHistory = localStorage.getItem('weightHistory');
+        if (savedWeightHistory) setWeightHistory(JSON.parse(savedWeightHistory));
         const vids = localStorage.getItem('videos');
         if (vids) { const saved = JSON.parse(vids); const merged = [...defaultVideos]; saved.forEach(v => { if (!merged.find(m => m.id === v.id)) merged.push(v); }); setVideos(merged); }
         else setVideos(defaultVideos);
@@ -404,7 +488,21 @@
         const newData = { ...weekData, [day]: { ...weekData[day], weight: wt } };
         setWeekData(newData);
         localStorage.setItem('weekData', JSON.stringify(newData));
-        if (wt) { setCurrentWeight(wt); localStorage.setItem('currentWeight', wt); }
+        if (wt) {
+          setCurrentWeight(wt);
+          localStorage.setItem('currentWeight', wt);
+          // Add to weight history
+          const today = new Date().toISOString().split('T')[0];
+          const numWeight = parseFloat(wt);
+          if (!isNaN(numWeight)) {
+            setWeightHistory(prev => {
+              const filtered = prev.filter(h => h.date !== today);
+              const updated = [...filtered, { date: today, weight: numWeight }].sort((a, b) => a.date.localeCompare(b.date));
+              localStorage.setItem('weightHistory', JSON.stringify(updated));
+              return updated;
+            });
+          }
+        }
       };
 
       const updateWater = (day, amt) => {
@@ -663,6 +761,24 @@
                     <div className="w-full bg-red-950/50 rounded-full h-3 overflow-hidden">
                       <div className={`bg-gradient-to-r ${theme.accent} h-3 rounded-full transition-all duration-500`} style={{ width: `${getXpProgress()}%` }} />
                     </div>
+                  </div>
+                </Card>
+
+                {/* Weight Progress Graph */}
+                <Card>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider">WEIGHT JOURNEY</h3>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-red-400/70">START: 233</span>
+                      <span className="text-green-400/70">GOAL: 190</span>
+                    </div>
+                  </div>
+                  <WeightGraph history={weightHistory} startWeight={233} goalWeight={190} />
+                  <div className="flex justify-between items-center mt-2 text-xs">
+                    <span className="text-neutral-500">{weightHistory.length} entries</span>
+                    <span className="text-red-400 font-bold">
+                      {weightHistory.length > 1 ? `${(233 - weightHistory[weightHistory.length - 1].weight).toFixed(1)} lbs lost` : 'Log weight to track'}
+                    </span>
                   </div>
                 </Card>
 
