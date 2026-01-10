@@ -471,7 +471,20 @@
         const savedXp = localStorage.getItem('xp'); if (savedXp) setXp(parseInt(savedXp));
         const savedPRs = localStorage.getItem('personalRecords'); if (savedPRs) setPersonalRecords(JSON.parse(savedPRs));
         const savedWeightHistory = localStorage.getItem('weightHistory');
-        if (savedWeightHistory) setWeightHistory(JSON.parse(savedWeightHistory));
+        if (savedWeightHistory) {
+          const parsed = JSON.parse(savedWeightHistory);
+          // Ensure starting point exists
+          if (!parsed.find(h => h.date === '2025-01-01')) {
+            parsed.unshift({ date: '2025-01-01', weight: 233 });
+            parsed.sort((a, b) => a.date.localeCompare(b.date));
+          }
+          setWeightHistory(parsed);
+        } else {
+          // Initialize with starting weight and save to localStorage
+          const initial = [{ date: '2025-01-01', weight: 233 }];
+          setWeightHistory(initial);
+          localStorage.setItem('weightHistory', JSON.stringify(initial));
+        }
         const vids = localStorage.getItem('videos');
         if (vids) { const saved = JSON.parse(vids); const merged = [...defaultVideos]; saved.forEach(v => { if (!merged.find(m => m.id === v.id)) merged.push(v); }); setVideos(merged); }
         else setVideos(defaultVideos);
@@ -496,8 +509,10 @@
           const numWeight = parseFloat(wt);
           if (!isNaN(numWeight)) {
             setWeightHistory(prev => {
-              const filtered = prev.filter(h => h.date !== today);
-              const updated = [...filtered, { date: today, weight: numWeight }].sort((a, b) => a.date.localeCompare(b.date));
+              // Keep starting point, filter out today's previous entry
+              const startPoint = prev.find(h => h.date === '2025-01-01') || { date: '2025-01-01', weight: 233 };
+              const filtered = prev.filter(h => h.date !== today && h.date !== '2025-01-01');
+              const updated = [startPoint, ...filtered, { date: today, weight: numWeight }].sort((a, b) => a.date.localeCompare(b.date));
               localStorage.setItem('weightHistory', JSON.stringify(updated));
               return updated;
             });
