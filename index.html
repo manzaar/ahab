@@ -815,12 +815,6 @@
                         : 'Log weight to track'}
                     </span>
                   </div>
-                  {/* Debug - shows raw data */}
-                  <div className="mt-2 p-2 bg-black/50 rounded text-[9px] text-neutral-500 font-mono overflow-x-auto">
-                    {weightHistory.map((h, i) => (
-                      <span key={i} className="mr-2">{h.date.slice(5)}:{h.weight}</span>
-                    ))}
-                  </div>
                 </Card>
 
                 {/* Rank & Streak */}
