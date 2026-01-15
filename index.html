@@ -132,14 +132,6 @@
       ]}
     };
 
-    // PR tracking
-    const PR_NAMES = {
-      bench: 'BENCH PRESS',
-      squat: 'SQUAT',
-      deadlift: 'DEADLIFT',
-      ohp: 'OVERHEAD PRESS',
-      pullups: 'PULL-UPS'
-    };
 
     // ============================================
     // UTILITY FUNCTIONS
@@ -670,13 +662,6 @@
 
       const getExerciseData = (date, workoutType, exercise) => workoutLog[date]?.[workoutType]?.[exercise] || { weight: '', reps: '', sets: '' };
 
-      const updatePR = (lift, field, value) => {
-        const newPRs = { ...personalRecords, [lift]: { ...personalRecords[lift], [field]: value } };
-        setPersonalRecords(newPRs);
-        localStorage.setItem('personalRecords', JSON.stringify(newPRs));
-        triggerSync();
-      };
-
       const getCalendarDays = () => {
         const year = calendarMonth.getFullYear();
         const month = calendarMonth.getMonth();
@@ -722,6 +707,23 @@
           }
         });
         return history.slice(0, 5);
+      };
+
+      // Get PR (max weight) for an exercise from workout history
+      const getExercisePR = (workoutType, exerciseName) => {
+        let maxWeight = 0;
+        let prData = null;
+        Object.keys(workoutLog).forEach(date => {
+          const data = workoutLog[date]?.[workoutType]?.[exerciseName];
+          if (data && data.weight) {
+            const weight = parseFloat(data.weight);
+            if (weight > maxWeight) {
+              maxWeight = weight;
+              prData = { weight: data.weight, reps: data.reps, sets: data.sets, date };
+            }
+          }
+        });
+        return prData;
       };
 
 
@@ -1272,52 +1274,32 @@
                   <h2 className="text-xl font-bold text-yellow-400 flex items-center gap-2 mb-2">
                     🏆 Personal Records
                   </h2>
-                  <p className="text-neutral-400 text-xs">Track your strength progress</p>
+                  <p className="text-neutral-400 text-xs">Your best lifts, automatically tracked from workouts</p>
                 </Card>
 
-                {Object.keys(PR_NAMES).map(lift => (
-                  <Card key={lift}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">🏆</span>
-                      <h3 className="font-bold text-yellow-400">{PR_NAMES[lift]}</h3>
-                    </div>
-                    {personalRecords[lift]?.weight && personalRecords[lift]?.reps ? (
-                      <div className="bg-neutral-800 border-l-4 border-yellow-500 rounded-lg p-3 mb-3">
-                        <p className="text-yellow-300 font-bold text-lg">
-                          {personalRecords[lift].weight} lbs × {personalRecords[lift].reps} reps
-                        </p>
-                        {personalRecords[lift].date && (
-                          <p className="text-neutral-400 text-xs mt-1">{personalRecords[lift].date}</p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-neutral-500 text-sm mb-3 italic">No PR set yet</p>
-                    )}
-                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                      <div>
-                        <label className="text-[10px] sm:text-xs text-neutral-400 font-medium">Weight</label>
-                        <DebouncedInput
-                          value={personalRecords[lift]?.weight}
-                          onSave={(val) => updatePR(lift, 'weight', val)}
-                          placeholder="lbs"
-                          inputMode="numeric"
-                          className="w-full bg-black border border-neutral-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-yellow-400 font-medium text-sm focus:outline-none focus:border-yellow-600"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] sm:text-xs text-neutral-400 font-medium">Reps</label>
-                        <DebouncedInput
-                          value={personalRecords[lift]?.reps}
-                          onSave={(val) => updatePR(lift, 'reps', val)}
-                          placeholder="#"
-                          inputMode="numeric"
-                          className="w-full bg-black border border-neutral-700 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-yellow-400 font-medium text-sm focus:outline-none focus:border-yellow-600"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] sm:text-xs text-neutral-400 font-medium">Date</label>
-                        <input type="date" value={personalRecords[lift]?.date || ''} onChange={(e) => updatePR(lift, 'date', e.target.value)} className="w-full bg-black border border-neutral-700 rounded-lg px-1 sm:px-3 py-1.5 sm:py-2 text-yellow-400 font-medium text-xs sm:text-sm focus:outline-none focus:border-yellow-600" />
-                      </div>
+                {Object.keys(WORKOUTS).map(workoutType => (
+                  <Card key={workoutType}>
+                    <h3 className="font-bold text-lg mb-3" style={{color: workoutType === 'push' ? '#f87171' : workoutType === 'pull' ? '#60a5fa' : '#a78bfa'}}>
+                      {WORKOUTS[workoutType].name} Day
+                    </h3>
+                    <div className="space-y-3">
+                      {WORKOUTS[workoutType].exercises.map(ex => {
+                        const pr = getExercisePR(workoutType, ex.name);
+                        return (
+                          <div key={ex.name} className="flex items-center justify-between py-2 border-b border-neutral-800 last:border-0">
+                            <span className="text-neutral-300 text-sm">{ex.name}</span>
+                            {pr ? (
+                              <div className="text-right">
+                                <span className="text-yellow-400 font-bold">{pr.weight} lbs</span>
+                                {pr.reps && <span className="text-neutral-500 text-sm"> × {pr.reps}</span>}
+                                <p className="text-neutral-600 text-xs">{pr.date}</p>
+                              </div>
+                            ) : (
+                              <span className="text-neutral-600 text-sm italic">No data yet</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </Card>
                 ))}
