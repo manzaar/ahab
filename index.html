@@ -606,7 +606,8 @@
       }, []);
 
       const toggleMeal = (day, meal) => {
-        const newData = { ...weekData, [day]: { ...weekData[day], [meal]: !weekData[day][meal] } };
+        const dayData = weekData[day] || {};
+        const newData = { ...weekData, [day]: { ...dayData, [meal]: !dayData[meal] } };
         setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
         // Reset dayComplete if unchecking on today
         if (day === getTodayString()) setDayComplete(false);
