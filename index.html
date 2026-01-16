@@ -83,6 +83,100 @@
     .spire-glow { animation: spireGlow 3s ease-in-out infinite; }
     .boss-breath { animation: bossBreath 2s ease-in-out infinite; }
 
+    /* Scroll of Penance Animations */
+    @keyframes redSlash {
+      0% { width: 0; opacity: 1; }
+      50% { width: 100%; opacity: 1; }
+      100% { width: 100%; opacity: 0.7; }
+    }
+    @keyframes jitter {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px) rotate(-0.5deg); }
+      75% { transform: translateX(3px) rotate(0.5deg); }
+    }
+    @keyframes bloodDrip {
+      0% { height: 0; opacity: 0; }
+      10% { opacity: 1; }
+      100% { height: 40px; opacity: 0; }
+    }
+    @keyframes soulFire {
+      0%, 100% {
+        box-shadow: 0 0 5px #4682b4, 0 0 10px #4682b4, 0 0 20px #4682b4;
+        filter: brightness(1);
+      }
+      50% {
+        box-shadow: 0 0 10px #4682b4, 0 0 20px #4682b4, 0 0 40px #4682b4, 0 0 60px #1e90ff;
+        filter: brightness(1.3);
+      }
+    }
+    @keyframes fragmentFly {
+      0% {
+        transform: translateX(-150px) translateY(100px) rotate(-45deg) scale(0.5);
+        opacity: 0;
+      }
+      30% { opacity: 1; }
+      70% {
+        transform: translateX(0) translateY(-20px) rotate(10deg) scale(1.2);
+      }
+      100% {
+        transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+        opacity: 1;
+      }
+    }
+    @keyframes bossDefeat {
+      0% { transform: scale(1); filter: brightness(1); }
+      20% { transform: scale(1.1); filter: brightness(2) hue-rotate(30deg); }
+      40% { transform: scale(0.9); filter: brightness(3) hue-rotate(60deg); }
+      60% { transform: scale(1.2); filter: brightness(2) hue-rotate(90deg); }
+      100% { transform: scale(0); filter: brightness(5); opacity: 0; }
+    }
+    @keyframes lootReveal {
+      0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+      50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes healthDrain {
+      from { width: var(--start-width); }
+      to { width: var(--end-width); }
+    }
+    @keyframes parchmentBurn {
+      0%, 100% { filter: sepia(0.3) brightness(0.9); }
+      50% { filter: sepia(0.5) brightness(0.85); }
+    }
+    @keyframes curseBleed {
+      0%, 100% { text-shadow: 0 0 0 transparent; }
+      50% { text-shadow: 0 2px 4px #8b0000, 0 4px 8px rgba(139,0,0,0.5); }
+    }
+    .red-slash { animation: redSlash 0.3s ease-out forwards; }
+    .jitter { animation: jitter 0.15s ease-in-out; }
+    .blood-drip { animation: bloodDrip 2s ease-in infinite; }
+    .soul-fire { animation: soulFire 1.5s ease-in-out infinite; }
+    .fragment-fly { animation: fragmentFly 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    .boss-defeat { animation: bossDefeat 1s ease-out forwards; }
+    .loot-reveal { animation: lootReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    .parchment-burn { animation: parchmentBurn 4s ease-in-out infinite; }
+    .curse-bleed { animation: curseBleed 2s ease-in-out infinite; }
+
+    /* Scroll texture */
+    .scroll-texture {
+      background:
+        linear-gradient(135deg, rgba(139,69,19,0.1) 0%, transparent 50%),
+        linear-gradient(225deg, rgba(139,69,19,0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at center, #1a1510 0%, #0d0a08 100%);
+      border: 2px solid #3d2914;
+      box-shadow:
+        inset 0 0 30px rgba(0,0,0,0.8),
+        0 0 10px rgba(0,0,0,0.5);
+    }
+    .burnt-edge {
+      clip-path: polygon(
+        0% 5%, 3% 0%, 8% 3%, 15% 0%, 22% 4%, 30% 1%, 38% 3%, 45% 0%,
+        52% 4%, 60% 1%, 68% 3%, 75% 0%, 82% 4%, 90% 1%, 95% 3%, 100% 0%,
+        100% 95%, 97% 100%, 92% 97%, 85% 100%, 78% 96%, 70% 99%, 62% 97%, 55% 100%,
+        48% 96%, 40% 99%, 32% 97%, 25% 100%, 18% 96%, 10% 99%, 5% 97%, 0% 100%
+      );
+    }
+
     /* Safe area for iOS notch */
     html, body {
       overflow-x: hidden;
@@ -381,6 +475,14 @@
       const [showCriticalHit, setShowCriticalHit] = useState(false);
       const [towerShake, setTowerShake] = useState(false);
       const [lastFragment, setLastFragment] = useState(null);
+      const [slashedEdict, setSlashedEdict] = useState(null);
+      const [flyingFragment, setFlyingFragment] = useState(false);
+      const [bossDefeated, setBossDefeated] = useState(false);
+      const [showLoot, setShowLoot] = useState(false);
+      const [earnedBadges, setEarnedBadges] = useState(() => {
+        const saved = localStorage.getItem('earnedBadges');
+        return saved ? JSON.parse(saved) : [];
+      });
 
       // Save data to Supabase
       const saveToCloud = async (code, data) => {
@@ -924,14 +1026,52 @@
       // Check if in Sabbath (day 6 or 7 with 5+ fragments)
       const isSabbath = () => getDayOfWeek() >= 6 && getWeeklyFragments() >= 5;
 
-      // Trigger critical hit effect
-      const triggerCriticalHit = (fragmentType) => {
+      // Trigger critical hit effect with enhanced animations
+      const triggerCriticalHit = (edictKey) => {
+        // Slash animation on the edict
+        setSlashedEdict(edictKey);
+        setTimeout(() => setSlashedEdict(null), 500);
+
+        // Flying fragment animation
+        setFlyingFragment(true);
+        setTimeout(() => setFlyingFragment(false), 600);
+
+        // Screen shake and flash
         setShowCriticalHit(true);
         setTowerShake(true);
-        setLastFragment(fragmentType);
+        setLastFragment(edictKey);
         setTimeout(() => setShowCriticalHit(false), 300);
         setTimeout(() => setTowerShake(false), 400);
+
+        // Check for boss defeat (all 5 edicts done in boss week)
+        setTimeout(() => {
+          if (isBossWeek()) {
+            const todayStr = getTodayString();
+            const td = weekData[todayStr] || {};
+            const allDone = td.meal1 && td.meal2 && td.meal3 && td.training && (td.water || 0) >= 8;
+            if (allDone && !bossDefeated) {
+              setBossDefeated(true);
+              setTimeout(() => {
+                setShowLoot(true);
+                // Award badge
+                const newBadge = { name: getBossName().name, date: todayStr, icon: '🏆' };
+                const updated = [...earnedBadges, newBadge];
+                setEarnedBadges(updated);
+                localStorage.setItem('earnedBadges', JSON.stringify(updated));
+              }, 1000);
+            }
+          }
+        }, 500);
       };
+
+      // Loot badges
+      const LOOT_BADGES = [
+        { id: 'iron_heart', name: 'The Iron Heart', icon: '🖤', desc: 'Defeated Malphas' },
+        { id: 'void_crown', name: 'The Void Crown', icon: '👑', desc: 'Defeated Verath' },
+        { id: 'soul_chain', name: 'The Soul Chain', icon: '⛓️', desc: 'Defeated Nethys' },
+        { id: 'blood_sigil', name: 'The Blood Sigil', icon: '🩸', desc: 'Defeated Kharos' },
+        { id: 'doom_rune', name: 'The Doom Rune', icon: '🔮', desc: 'Defeated Morvain' }
+      ];
 
       // Blood Orb Component (Daily Progress)
       const BloodOrb = ({ percentage }) => (
@@ -1103,133 +1243,211 @@
               <div className={`space-y-4 animate-fade-in ${towerShake ? 'screen-shake' : ''}`}>
                 {/* Critical Hit Flash Overlay */}
                 {showCriticalHit && (
-                  <div className="fixed inset-0 bg-red-900/50 pointer-events-none z-40 critical-flash" />
+                  <div className="fixed inset-0 pointer-events-none z-40 critical-flash" style={{background: 'radial-gradient(circle, rgba(139,0,0,0.6) 0%, rgba(70,130,180,0.3) 100%)'}} />
+                )}
+
+                {/* Boss Defeated Overlay */}
+                {bossDefeated && !showLoot && (
+                  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/90">
+                    <div className="text-center boss-defeat">
+                      <p className="text-6xl mb-4">{getBossName().icon}</p>
+                      <p className="text-2xl font-black" style={{color: '#8b0000'}}>{getBossName().name}</p>
+                      <p className="text-lg mt-2" style={{color: '#4682b4'}}>VANQUISHED</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Loot Reveal Overlay */}
+                {showLoot && (
+                  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/95" onClick={() => { setShowLoot(false); setBossDefeated(false); }}>
+                    <div className="text-center loot-reveal">
+                      <p className="text-xs tracking-widest mb-4" style={{color: '#4682b4'}}>LEGENDARY LOOT ACQUIRED</p>
+                      <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center soul-fire" style={{background: 'linear-gradient(135deg, #1a1a2e 0%, #0a0a0f 100%)', border: '3px solid #4682b4'}}>
+                        <span className="text-5xl">🖤</span>
+                      </div>
+                      <p className="text-xl font-black mt-4" style={{color: '#ffd700'}}>The Iron Heart</p>
+                      <p className="text-xs mt-2 text-neutral-500">Tap to continue</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flying Fragment */}
+                {flyingFragment && (
+                  <div className="fixed z-30 pointer-events-none fragment-fly" style={{left: '50%', top: '40%', marginLeft: '-15px'}}>
+                    <div className="w-8 h-10 bg-gradient-to-b from-red-800 to-red-950 border border-red-600" style={{clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)'}} />
+                  </div>
                 )}
 
                 {/* Header */}
-                <div className="text-center py-4">
-                  <h1 className="text-2xl font-black tracking-widest" style={{color: '#8b0000', textShadow: '0 0 10px rgba(139,0,0,0.5)'}}>
+                <div className="text-center py-3">
+                  <h1 className="text-xl font-black tracking-[0.3em]" style={{color: '#8b0000', textShadow: '0 0 20px rgba(139,0,0,0.5), 0 0 40px rgba(139,0,0,0.3)', fontFamily: 'serif'}}>
                     TOWER OF THE DAMNED
                   </h1>
-                  <p className="text-xs tracking-wider mt-1" style={{color: '#4682b4'}}>
-                    {isSabbath() ? '☽ SABBATH OF SOULS ☽' : isBossWeek() ? '⚔️ SCOURGE ROOM ⚔️' : 'FORGE THE SPIRE'}
+                  <p className="text-[10px] tracking-[0.2em] mt-1" style={{color: '#4682b4'}}>
+                    {isSabbath() ? '☽ SABBATH OF SOULS ☽' : isBossWeek() ? '⚔️ SCOURGE ROOM ⚔️' : '† FORGE THE SPIRE †'}
                   </p>
                 </div>
 
                 {/* Tower and Orbs Container */}
-                <div className="flex items-center justify-center gap-6 py-4">
-                  {/* Blood Orb - Daily */}
+                <div className="flex items-center justify-center gap-4 py-2">
                   <div className="text-center">
                     <BloodOrb percentage={(getDailyEdicts(today) / 5) * 100} />
-                    <p className="text-xs mt-2 tracking-wider" style={{color: '#8b0000'}}>DAILY</p>
-                    <p className="text-xs" style={{color: '#666'}}>RESOLVE</p>
+                    <p className="text-[10px] mt-1 tracking-widest" style={{color: '#8b0000'}}>BLOOD</p>
                   </div>
-
-                  {/* Gothic Spire */}
                   <GothicSpire
                     fragments={getWeeklyFragments()}
                     level={getTowerLevel()}
                     isBoss={isBossWeek()}
                     isSabbathMode={isSabbath()}
                   />
-
-                  {/* Gold Orb - Weekly */}
                   <div className="text-center">
                     <GoldOrb percentage={(getWeeklyFragments() / 5) * 100} />
-                    <p className="text-xs mt-2 tracking-wider" style={{color: '#8b6914'}}>WEEKLY</p>
-                    <p className="text-xs" style={{color: '#666'}}>ASCENT</p>
+                    <p className="text-[10px] mt-1 tracking-widest" style={{color: '#8b6914'}}>ESSENCE</p>
                   </div>
                 </div>
 
-                {/* Boss Encounter */}
-                {isBossWeek() && (
-                  <Card className="border-red-900/50 bg-gradient-to-b from-neutral-900 to-black">
-                    <div className="text-center">
-                      <p className="text-xs tracking-widest mb-2" style={{color: '#4682b4'}}>SCOURGE ROOM</p>
-                      <p className="text-xl font-black boss-breath" style={{color: '#8b0000'}}>
-                        {getBossName().icon} {getBossName().name}
-                      </p>
-                      <p className="text-xs mt-2 text-neutral-500">
-                        Complete all edicts to vanquish this foe
-                      </p>
+                {/* Boss Encounter Card */}
+                {isBossWeek() && !bossDefeated && (
+                  <div className="relative p-4 rounded-lg boss-breath" style={{background: 'linear-gradient(180deg, #1a0a0a 0%, #0a0505 100%)', border: '2px solid #3a0a0a', boxShadow: '0 0 30px rgba(139,0,0,0.3)'}}>
+                    <p className="text-[10px] tracking-[0.3em] text-center mb-2" style={{color: '#4682b4'}}>⚔️ SCOURGE ROOM ⚔️</p>
+                    <p className="text-lg font-black text-center" style={{color: '#8b0000', textShadow: '0 0 10px rgba(139,0,0,0.5)'}}>
+                      {getBossName().icon} {getBossName().name}
+                    </p>
+                    {/* Boss Health Bar */}
+                    <div className="mt-3">
+                      <div className="flex justify-between text-[10px] mb-1">
+                        <span style={{color: '#666'}}>VITALITY</span>
+                        <span style={{color: '#8b0000'}}>{5 - getDailyEdicts(today)}/5</span>
+                      </div>
+                      <div className="h-3 rounded-full overflow-hidden" style={{background: '#0a0a0a', border: '1px solid #3a0a0a'}}>
+                        <div
+                          className="h-full transition-all duration-500"
+                          style={{
+                            width: `${((5 - getDailyEdicts(today)) / 5) * 100}%`,
+                            background: 'linear-gradient(90deg, #8b0000 0%, #dc143c 50%, #8b0000 100%)'
+                          }}
+                        />
+                      </div>
                     </div>
-                  </Card>
+                    <p className="text-[10px] text-center mt-2" style={{color: '#666'}}>
+                      Purge all edicts to vanquish
+                    </p>
+                  </div>
                 )}
 
-                {/* Today's Edicts */}
-                <Card className="border-neutral-800">
-                  <h3 className="text-sm font-bold tracking-widest mb-4" style={{color: '#8b0000'}}>
-                    TODAY'S EDICTS
+                {/* Scroll of Penance */}
+                <div className="scroll-texture burnt-edge rounded-lg p-4 parchment-burn">
+                  <h3 className="text-center text-sm tracking-[0.2em] mb-4" style={{color: '#8b0000', fontFamily: 'serif', textShadow: '0 2px 4px rgba(0,0,0,0.5)'}}>
+                    ⛧ EDICTS OF THE DAMNED ⛧
                   </h3>
                   <div className="space-y-2">
                     {[
-                      { key: 'meal1', label: 'First Meal', done: todayData.meal1 },
-                      { key: 'meal2', label: 'Second Meal', done: todayData.meal2 },
-                      { key: 'meal3', label: 'Third Meal', done: todayData.meal3 },
-                      { key: 'training', label: 'Strength Ritual', done: todayData.training },
-                      { key: 'water', label: 'Hydration Rite', done: (todayData.water || 0) >= 8 }
-                    ].map((edict, i) => (
+                      { key: 'meal1', label: 'The First Offering', done: todayData.meal1 },
+                      { key: 'meal2', label: 'The Second Tribute', done: todayData.meal2 },
+                      { key: 'meal3', label: 'The Final Sacrifice', done: todayData.meal3 },
+                      { key: 'training', label: 'The Iron Ritual', done: todayData.training },
+                      { key: 'water', label: 'The Cleansing Tide', done: (todayData.water || 0) >= 8 }
+                    ].map((edict) => (
                       <div
                         key={edict.key}
-                        className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
-                          edict.done
-                            ? 'bg-gradient-to-r from-red-950/50 to-transparent border-red-900/50'
-                            : 'bg-black border-neutral-800'
-                        }`}
+                        className={`relative p-3 rounded border transition-all ${slashedEdict === edict.key ? 'jitter' : ''}`}
+                        style={{
+                          background: edict.done ? 'linear-gradient(90deg, rgba(139,0,0,0.2) 0%, transparent 100%)' : 'rgba(0,0,0,0.3)',
+                          borderColor: edict.done ? '#5a1a1a' : '#2a1a0a'
+                        }}
                       >
-                        <span className={`text-sm ${edict.done ? 'text-red-400' : 'text-neutral-500'}`}>
-                          {edict.label}
-                        </span>
-                        <span className={`text-lg ${edict.done ? 'text-red-500' : 'text-neutral-700'}`}>
-                          {edict.done ? '✓' : '○'}
-                        </span>
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-sm transition-all ${edict.done ? 'line-through opacity-60' : ''}`}
+                            style={{
+                              color: edict.done ? '#8b0000' : '#a08060',
+                              fontFamily: 'serif',
+                              textShadow: edict.done ? 'none' : '0 1px 2px rgba(0,0,0,0.5)'
+                            }}
+                          >
+                            {edict.label}
+                          </span>
+                          <span style={{color: edict.done ? '#dc143c' : '#3a2a1a', fontSize: '18px'}}>
+                            {edict.done ? '✗' : '○'}
+                          </span>
+                        </div>
+                        {/* Red Slash Effect */}
+                        {edict.done && (
+                          <div
+                            className="absolute left-2 right-2 top-1/2 h-0.5 -translate-y-1/2"
+                            style={{background: 'linear-gradient(90deg, transparent, #8b0000, #dc143c, #8b0000, transparent)'}}
+                          />
+                        )}
+                        {/* Blood Drip for incomplete (curse) */}
+                        {!edict.done && getDayOfWeek() >= 6 && (
+                          <div className="absolute bottom-0 left-1/4 w-1 bg-gradient-to-b from-red-900 to-transparent blood-drip" />
+                        )}
                       </div>
                     ))}
                   </div>
-                  <p className="text-center text-xs mt-4 text-neutral-600">
-                    Purge trials in the Home tab to forge the spire
+                  <p className="text-center text-[10px] mt-4" style={{color: '#5a4a3a', fontFamily: 'serif'}}>
+                    "Purge your trials upon the Home altar"
                   </p>
-                </Card>
+                </div>
 
-                {/* Week Progress */}
-                <Card className="border-neutral-800">
-                  <h3 className="text-sm font-bold tracking-widest mb-3" style={{color: '#8b6914'}}>
-                    SPIRE FRAGMENTS
-                  </h3>
+                {/* Spire Fragments */}
+                <div className="p-3 rounded-lg" style={{background: 'linear-gradient(180deg, #0a0a0a 0%, #050505 100%)', border: '1px solid #1a1a1a'}}>
+                  <p className="text-[10px] tracking-[0.2em] text-center mb-3" style={{color: '#8b6914'}}>SPIRE FRAGMENTS</p>
                   <div className="flex justify-center gap-2">
                     {[1, 2, 3, 4, 5].map(n => (
                       <div
                         key={n}
-                        className={`w-10 h-14 rounded-sm flex items-center justify-center ${
-                          n <= getWeeklyFragments()
-                            ? 'bg-gradient-to-b from-red-800 to-red-950 border border-red-700'
-                            : 'bg-neutral-900 border border-neutral-800'
-                        }`}
+                        className={`w-8 h-12 flex items-center justify-center transition-all ${n <= getWeeklyFragments() ? 'soul-fire' : ''}`}
+                        style={{
+                          background: n <= getWeeklyFragments()
+                            ? 'linear-gradient(180deg, #8b0000 0%, #4a0000 100%)'
+                            : 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)',
+                          border: `1px solid ${n <= getWeeklyFragments() ? '#dc143c' : '#2a2a2a'}`,
+                          clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)'
+                        }}
                       >
-                        <span className={`text-xs font-bold ${n <= getWeeklyFragments() ? 'text-red-400' : 'text-neutral-700'}`}>
-                          {n}
+                        <span className={`text-[10px] font-bold ${n <= getWeeklyFragments() ? 'text-red-400' : 'text-neutral-700'}`}>
+                          {n <= getWeeklyFragments() ? '⬧' : n}
                         </span>
                       </div>
                     ))}
                   </div>
-                  <p className="text-center text-xs mt-3 text-neutral-500">
-                    {getWeeklyFragments() >= 5
-                      ? 'Level forged. Rest during the Sabbath.'
-                      : `${5 - getWeeklyFragments()} fragments remain to forge this level`}
+                  <p className="text-center text-[10px] mt-2" style={{color: '#666'}}>
+                    {getWeeklyFragments() >= 5 ? '† Level Forged †' : `${5 - getWeeklyFragments()} fragments to ascend`}
                   </p>
-                </Card>
-
-                {/* Streak / Power */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Card className="text-center border-neutral-800">
-                    <p className="text-3xl font-black" style={{color: '#dc143c'}}>{streak}</p>
-                    <p className="text-xs tracking-wider text-neutral-500">DAY STREAK</p>
-                  </Card>
-                  <Card className="text-center border-neutral-800">
-                    <p className="text-3xl font-black" style={{color: '#4682b4'}}>{getTowerLevel()}</p>
-                    <p className="text-xs tracking-wider text-neutral-500">TOWER LEVEL</p>
-                  </Card>
                 </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center p-3 rounded-lg" style={{background: '#0a0505', border: '1px solid #2a0a0a'}}>
+                    <p className="text-2xl font-black" style={{color: '#dc143c'}}>{streak}</p>
+                    <p className="text-[8px] tracking-wider" style={{color: '#666'}}>STREAK</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg" style={{background: '#05050a', border: '1px solid #0a0a2a'}}>
+                    <p className="text-2xl font-black" style={{color: '#4682b4'}}>{getTowerLevel()}</p>
+                    <p className="text-[8px] tracking-wider" style={{color: '#666'}}>LEVEL</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg" style={{background: '#0a0a05', border: '1px solid #2a2a0a'}}>
+                    <p className="text-2xl font-black" style={{color: '#8b6914'}}>{earnedBadges.length}</p>
+                    <p className="text-[8px] tracking-wider" style={{color: '#666'}}>BADGES</p>
+                  </div>
+                </div>
+
+                {/* Earned Badges */}
+                {earnedBadges.length > 0 && (
+                  <div className="p-3 rounded-lg" style={{background: '#050505', border: '1px solid #1a1a0a'}}>
+                    <p className="text-[10px] tracking-[0.2em] text-center mb-2" style={{color: '#8b6914'}}>LEGENDARY LOOT</p>
+                    <div className="flex justify-center gap-3 flex-wrap">
+                      {earnedBadges.map((badge, i) => (
+                        <div key={i} className="text-center">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{background: 'linear-gradient(135deg, #1a1a2e 0%, #0a0a0f 100%)', border: '2px solid #4682b4'}}>
+                            <span className="text-lg">{badge.icon || '🏆'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
