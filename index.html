@@ -35,6 +35,54 @@
     }
     .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
 
+    /* Tower of the Damned Animations */
+    @keyframes screenShake {
+      0%, 100% { transform: translateX(0); }
+      10% { transform: translateX(-8px) translateY(2px); }
+      20% { transform: translateX(8px) translateY(-2px); }
+      30% { transform: translateX(-6px) translateY(1px); }
+      40% { transform: translateX(6px) translateY(-1px); }
+      50% { transform: translateX(-4px); }
+      60% { transform: translateX(4px); }
+      70% { transform: translateX(-2px); }
+      80% { transform: translateX(2px); }
+      90% { transform: translateX(-1px); }
+    }
+    @keyframes criticalFlash {
+      0% { opacity: 0; }
+      10% { opacity: 0.8; }
+      100% { opacity: 0; }
+    }
+    @keyframes fragmentSlam {
+      0% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+      60% { transform: translateY(10px) scale(1); opacity: 1; }
+      80% { transform: translateY(-5px) scale(1); }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    @keyframes orbPulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+    @keyframes fluidWave {
+      0%, 100% { transform: translateY(0) scaleY(1); }
+      50% { transform: translateY(-2px) scaleY(1.02); }
+    }
+    @keyframes spireGlow {
+      0%, 100% { filter: drop-shadow(0 0 5px rgba(139, 0, 0, 0.5)); }
+      50% { filter: drop-shadow(0 0 20px rgba(139, 0, 0, 0.8)) drop-shadow(0 0 40px rgba(70, 130, 180, 0.4)); }
+    }
+    @keyframes bossBreath {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.02); filter: brightness(1.2); }
+    }
+    .screen-shake { animation: screenShake 0.4s ease-out; }
+    .critical-flash { animation: criticalFlash 0.3s ease-out; }
+    .fragment-slam { animation: fragmentSlam 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+    .orb-pulse { animation: orbPulse 2s ease-in-out infinite; }
+    .fluid-wave { animation: fluidWave 3s ease-in-out infinite; }
+    .spire-glow { animation: spireGlow 3s ease-in-out infinite; }
+    .boss-breath { animation: bossBreath 2s ease-in-out infinite; }
+
     /* Safe area for iOS notch */
     html, body {
       overflow-x: hidden;
@@ -329,6 +377,11 @@
       const [calendarDayDetail, setCalendarDayDetail] = useState(null);
       const [longPressTimer, setLongPressTimer] = useState(null);
 
+      // Tower of the Damned
+      const [showCriticalHit, setShowCriticalHit] = useState(false);
+      const [towerShake, setTowerShake] = useState(false);
+      const [lastFragment, setLastFragment] = useState(null);
+
       // Save data to Supabase
       const saveToCloud = async (code, data) => {
         if (!code) return;
@@ -599,12 +652,17 @@
 
       const toggleMeal = (day, meal) => {
         const dayData = weekData[day] || {};
+        const wasChecked = dayData[meal];
         const newData = { ...weekData, [day]: { ...dayData, [meal]: !dayData[meal] } };
         setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
         // Reset dayComplete if unchecking on today
         if (day === getTodayString()) setDayComplete(false);
         // Mark day as needing to be logged
         setLoggedDays(prev => ({ ...prev, [day]: false }));
+        // Trigger critical hit on task completion (not unchecking)
+        if (!wasChecked) {
+          triggerCriticalHit(meal);
+        }
         triggerSync();
       };
 
@@ -637,10 +695,15 @@
       };
 
       const updateWater = (day, amt) => {
+        const prevAmt = weekData[day]?.water || 0;
         const newData = { ...weekData, [day]: { ...weekData[day], water: amt } };
         setWeekData(newData); localStorage.setItem('weekData', JSON.stringify(newData));
         // Mark day as needing to be logged
         setLoggedDays(prev => ({ ...prev, [day]: false }));
+        // Trigger critical hit when reaching 8 glasses
+        if (amt >= 8 && prevAmt < 8) {
+          triggerCriticalHit('water');
+        }
         triggerSync();
       };
 
@@ -801,6 +864,185 @@
         return rotation[(lastIdx + 1) % 3];
       };
 
+      // ============================================
+      // TOWER OF THE DAMNED
+      // ============================================
+
+      // Calculate tower level (weeks of activity)
+      const getTowerLevel = () => {
+        const startDate = new Date('2025-01-01');
+        const now = new Date();
+        const weeksSinceStart = Math.floor((now - startDate) / (7 * 24 * 60 * 60 * 1000));
+        return Math.max(1, weeksSinceStart + 1);
+      };
+
+      // Calculate daily edicts completed (tasks done today)
+      const getDailyEdicts = (dateStr) => {
+        const data = weekData[dateStr] || {};
+        let count = 0;
+        if (data.meal1) count++;
+        if (data.meal2) count++;
+        if (data.meal3) count++;
+        if (data.training) count++;
+        if ((data.water || 0) >= 8) count++;
+        return count;
+      };
+
+      // Calculate weekly completion for current week (0-5 scale for fragments)
+      const getWeeklyFragments = () => {
+        const weekDates = getCurrentWeekDates();
+        let daysCompleted = 0;
+        weekDates.forEach(dateStr => {
+          const edicts = getDailyEdicts(dateStr);
+          if (edicts >= 3) daysCompleted++; // 3+ edicts = day counts
+        });
+        return Math.min(5, daysCompleted);
+      };
+
+      // Check if we're in boss week (every 4 weeks)
+      const isBossWeek = () => getTowerLevel() % 4 === 0;
+
+      // Get boss name for current stage
+      const getBossName = () => {
+        const stage = Math.floor(getTowerLevel() / 4);
+        const bosses = [
+          { name: 'Malphas, The Unyielding Burden', icon: '👹' },
+          { name: 'Verath, Devourer of Will', icon: '🐉' },
+          { name: 'Nethys, The Hollow Promise', icon: '💀' },
+          { name: 'Kharos, Lord of Stagnation', icon: '⚔️' },
+          { name: 'Morvain, The Final Doubt', icon: '👑' }
+        ];
+        return bosses[stage % bosses.length];
+      };
+
+      // Get day of week (1-7, Monday = 1)
+      const getDayOfWeek = () => {
+        const day = new Date().getDay();
+        return day === 0 ? 7 : day;
+      };
+
+      // Check if in Sabbath (day 6 or 7 with 5+ fragments)
+      const isSabbath = () => getDayOfWeek() >= 6 && getWeeklyFragments() >= 5;
+
+      // Trigger critical hit effect
+      const triggerCriticalHit = (fragmentType) => {
+        setShowCriticalHit(true);
+        setTowerShake(true);
+        setLastFragment(fragmentType);
+        setTimeout(() => setShowCriticalHit(false), 300);
+        setTimeout(() => setTowerShake(false), 400);
+      };
+
+      // Blood Orb Component (Daily Progress)
+      const BloodOrb = ({ percentage }) => (
+        <div className="relative w-20 h-20">
+          <svg viewBox="0 0 100 100" className="w-full h-full">
+            <defs>
+              <linearGradient id="bloodGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#8b0000" />
+                <stop offset="100%" stopColor="#dc143c" />
+              </linearGradient>
+              <clipPath id="orbClip">
+                <circle cx="50" cy="50" r="45" />
+              </clipPath>
+            </defs>
+            <circle cx="50" cy="50" r="47" fill="none" stroke="#1a1a1a" strokeWidth="4" />
+            <circle cx="50" cy="50" r="45" fill="#0a0a0a" />
+            <g clipPath="url(#orbClip)">
+              <rect x="0" y={100 - percentage} width="100" height={percentage} fill="url(#bloodGradient)" className="fluid-wave" />
+            </g>
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#3a0a0a" strokeWidth="2" />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-red-400 font-bold text-sm">{Math.round(percentage)}%</span>
+          </div>
+        </div>
+      );
+
+      // Gold Orb Component (Weekly Progress)
+      const GoldOrb = ({ percentage }) => (
+        <div className="relative w-20 h-20">
+          <svg viewBox="0 0 100 100" className="w-full h-full">
+            <defs>
+              <linearGradient id="goldGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#8b6914" />
+                <stop offset="100%" stopColor="#ffd700" />
+              </linearGradient>
+              <clipPath id="goldClip">
+                <circle cx="50" cy="50" r="45" />
+              </clipPath>
+            </defs>
+            <circle cx="50" cy="50" r="47" fill="none" stroke="#1a1a1a" strokeWidth="4" />
+            <circle cx="50" cy="50" r="45" fill="#0a0a0a" />
+            <g clipPath="url(#goldClip)">
+              <rect x="0" y={100 - percentage} width="100" height={percentage} fill="url(#goldGradient)" className="fluid-wave" />
+            </g>
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#3a2a0a" strokeWidth="2" />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-yellow-400 font-bold text-sm">{Math.round(percentage)}%</span>
+          </div>
+        </div>
+      );
+
+      // Gothic Spire Component
+      const GothicSpire = ({ fragments, level, isBoss, isSabbathMode }) => {
+        const fragmentElements = [
+          { id: 1, path: 'M45 180 L55 180 L55 200 L45 200 Z', y: 180 },
+          { id: 2, path: 'M42 155 L58 155 L58 180 L42 180 Z', y: 155 },
+          { id: 3, path: 'M40 125 L60 125 L60 155 L40 155 Z', y: 125 },
+          { id: 4, path: 'M38 90 L62 90 L62 125 L38 125 Z', y: 90 },
+          { id: 5, path: 'M50 20 L65 90 L35 90 Z', y: 20 },
+        ];
+
+        return (
+          <div className={`relative ${towerShake ? 'screen-shake' : ''}`}>
+            <svg viewBox="0 0 100 220" className={`w-32 h-48 ${isSabbathMode ? 'spire-glow' : ''}`}>
+              <defs>
+                <linearGradient id="spireGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#2a2a2a" />
+                  <stop offset="100%" stopColor="#0a0a0a" />
+                </linearGradient>
+                <linearGradient id="activeFragment" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8b0000" />
+                  <stop offset="100%" stopColor="#4a0000" />
+                </linearGradient>
+              </defs>
+
+              {/* Base platform */}
+              <rect x="25" y="200" width="50" height="15" fill="#1a1a1a" stroke="#3a3a3a" strokeWidth="1" />
+
+              {/* Tower fragments */}
+              {fragmentElements.map((frag, i) => (
+                <g key={frag.id}>
+                  <path
+                    d={frag.path}
+                    fill={i < fragments ? 'url(#activeFragment)' : 'url(#spireGradient)'}
+                    stroke={i < fragments ? '#dc143c' : '#3a3a3a'}
+                    strokeWidth="2"
+                    className={lastFragment === i && showCriticalHit ? 'fragment-slam' : ''}
+                  />
+                  {i < fragments && (
+                    <path d={frag.path} fill="none" stroke="#ff4444" strokeWidth="1" opacity="0.5" />
+                  )}
+                </g>
+              ))}
+
+              {/* Level indicator */}
+              <text x="50" y="230" textAnchor="middle" fill="#666" fontSize="10" fontFamily="monospace">
+                LVL {level}
+              </text>
+            </svg>
+
+            {/* Boss indicator */}
+            {isBoss && (
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-2xl boss-breath">
+                {getBossName().icon}
+              </div>
+            )}
+          </div>
+        );
+      };
 
       const today = getTodayString();
       const todayData = weekData[today] || {};
@@ -838,8 +1080,9 @@
 
             {/* Navigation - Fixed Bottom on Mobile */}
             <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-red-900/30 px-2 py-1 z-50 safe-area-bottom">
-              <div className="max-w-lg mx-auto grid grid-cols-6 gap-0.5">
+              <div className="max-w-lg mx-auto grid grid-cols-7 gap-0.5">
                 {[
+                  { id: 'tower', icon: '🗼', label: 'Tower' },
                   { id: 'home', icon: '🏠', label: 'Home' },
                   { id: 'meals', icon: '🍽️', label: 'Meals' },
                   { id: 'workouts', icon: '💪', label: 'Train' },
@@ -854,6 +1097,141 @@
                 ))}
               </div>
             </div>
+
+            {/* TOWER OF THE DAMNED */}
+            {currentView === 'tower' && (
+              <div className={`space-y-4 animate-fade-in ${towerShake ? 'screen-shake' : ''}`}>
+                {/* Critical Hit Flash Overlay */}
+                {showCriticalHit && (
+                  <div className="fixed inset-0 bg-red-900/50 pointer-events-none z-40 critical-flash" />
+                )}
+
+                {/* Header */}
+                <div className="text-center py-4">
+                  <h1 className="text-2xl font-black tracking-widest" style={{color: '#8b0000', textShadow: '0 0 10px rgba(139,0,0,0.5)'}}>
+                    TOWER OF THE DAMNED
+                  </h1>
+                  <p className="text-xs tracking-wider mt-1" style={{color: '#4682b4'}}>
+                    {isSabbath() ? '☽ SABBATH OF SOULS ☽' : isBossWeek() ? '⚔️ SCOURGE ROOM ⚔️' : 'FORGE THE SPIRE'}
+                  </p>
+                </div>
+
+                {/* Tower and Orbs Container */}
+                <div className="flex items-center justify-center gap-6 py-4">
+                  {/* Blood Orb - Daily */}
+                  <div className="text-center">
+                    <BloodOrb percentage={(getDailyEdicts(today) / 5) * 100} />
+                    <p className="text-xs mt-2 tracking-wider" style={{color: '#8b0000'}}>DAILY</p>
+                    <p className="text-xs" style={{color: '#666'}}>RESOLVE</p>
+                  </div>
+
+                  {/* Gothic Spire */}
+                  <GothicSpire
+                    fragments={getWeeklyFragments()}
+                    level={getTowerLevel()}
+                    isBoss={isBossWeek()}
+                    isSabbathMode={isSabbath()}
+                  />
+
+                  {/* Gold Orb - Weekly */}
+                  <div className="text-center">
+                    <GoldOrb percentage={(getWeeklyFragments() / 5) * 100} />
+                    <p className="text-xs mt-2 tracking-wider" style={{color: '#8b6914'}}>WEEKLY</p>
+                    <p className="text-xs" style={{color: '#666'}}>ASCENT</p>
+                  </div>
+                </div>
+
+                {/* Boss Encounter */}
+                {isBossWeek() && (
+                  <Card className="border-red-900/50 bg-gradient-to-b from-neutral-900 to-black">
+                    <div className="text-center">
+                      <p className="text-xs tracking-widest mb-2" style={{color: '#4682b4'}}>SCOURGE ROOM</p>
+                      <p className="text-xl font-black boss-breath" style={{color: '#8b0000'}}>
+                        {getBossName().icon} {getBossName().name}
+                      </p>
+                      <p className="text-xs mt-2 text-neutral-500">
+                        Complete all edicts to vanquish this foe
+                      </p>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Today's Edicts */}
+                <Card className="border-neutral-800">
+                  <h3 className="text-sm font-bold tracking-widest mb-4" style={{color: '#8b0000'}}>
+                    TODAY'S EDICTS
+                  </h3>
+                  <div className="space-y-2">
+                    {[
+                      { key: 'meal1', label: 'First Meal', done: todayData.meal1 },
+                      { key: 'meal2', label: 'Second Meal', done: todayData.meal2 },
+                      { key: 'meal3', label: 'Third Meal', done: todayData.meal3 },
+                      { key: 'training', label: 'Strength Ritual', done: todayData.training },
+                      { key: 'water', label: 'Hydration Rite', done: (todayData.water || 0) >= 8 }
+                    ].map((edict, i) => (
+                      <div
+                        key={edict.key}
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                          edict.done
+                            ? 'bg-gradient-to-r from-red-950/50 to-transparent border-red-900/50'
+                            : 'bg-black border-neutral-800'
+                        }`}
+                      >
+                        <span className={`text-sm ${edict.done ? 'text-red-400' : 'text-neutral-500'}`}>
+                          {edict.label}
+                        </span>
+                        <span className={`text-lg ${edict.done ? 'text-red-500' : 'text-neutral-700'}`}>
+                          {edict.done ? '✓' : '○'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-center text-xs mt-4 text-neutral-600">
+                    Purge trials in the Home tab to forge the spire
+                  </p>
+                </Card>
+
+                {/* Week Progress */}
+                <Card className="border-neutral-800">
+                  <h3 className="text-sm font-bold tracking-widest mb-3" style={{color: '#8b6914'}}>
+                    SPIRE FRAGMENTS
+                  </h3>
+                  <div className="flex justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <div
+                        key={n}
+                        className={`w-10 h-14 rounded-sm flex items-center justify-center ${
+                          n <= getWeeklyFragments()
+                            ? 'bg-gradient-to-b from-red-800 to-red-950 border border-red-700'
+                            : 'bg-neutral-900 border border-neutral-800'
+                        }`}
+                      >
+                        <span className={`text-xs font-bold ${n <= getWeeklyFragments() ? 'text-red-400' : 'text-neutral-700'}`}>
+                          {n}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-center text-xs mt-3 text-neutral-500">
+                    {getWeeklyFragments() >= 5
+                      ? 'Level forged. Rest during the Sabbath.'
+                      : `${5 - getWeeklyFragments()} fragments remain to forge this level`}
+                  </p>
+                </Card>
+
+                {/* Streak / Power */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Card className="text-center border-neutral-800">
+                    <p className="text-3xl font-black" style={{color: '#dc143c'}}>{streak}</p>
+                    <p className="text-xs tracking-wider text-neutral-500">DAY STREAK</p>
+                  </Card>
+                  <Card className="text-center border-neutral-800">
+                    <p className="text-3xl font-black" style={{color: '#4682b4'}}>{getTowerLevel()}</p>
+                    <p className="text-xs tracking-wider text-neutral-500">TOWER LEVEL</p>
+                  </Card>
+                </div>
+              </div>
+            )}
 
             {/* HOME */}
             {currentView === 'home' && (
