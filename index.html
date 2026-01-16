@@ -157,6 +157,58 @@
     .parchment-burn { animation: parchmentBurn 4s ease-in-out infinite; }
     .curse-bleed { animation: curseBleed 2s ease-in-out infinite; }
 
+    /* Knight Sprite Animations */
+    /* Sprite sheet: 1758x1638, 17 cols x 16 rows, ~103x102 per frame */
+    @keyframes knight-idle {
+      from { background-position-x: 0%; }
+      to { background-position-x: -1600%; }
+    }
+    @keyframes knight-walk {
+      from { background-position-x: 0%; }
+      to { background-position-x: -1600%; }
+    }
+    @keyframes knight-attack {
+      from { background-position-x: 0%; }
+      to { background-position-x: -1600%; }
+    }
+    @keyframes knight-victory {
+      from { background-position-x: 0%; }
+      to { background-position-x: -1600%; }
+    }
+    .knight-sprite {
+      width: 120px;
+      height: 120px;
+      background-image: url('knight-sprite.png');
+      background-size: 1700% 1600%;
+      background-repeat: no-repeat;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .knight-idle {
+      background-position-y: 0%;
+      animation: knight-idle 1.2s steps(16) infinite;
+    }
+    .knight-walk {
+      background-position-y: 6.67%;
+      animation: knight-walk 0.8s steps(16) infinite;
+    }
+    .knight-attack {
+      background-position-y: 20%;
+      animation: knight-attack 0.6s steps(16) forwards;
+    }
+    .knight-heavy-attack {
+      background-position-y: 26.67%;
+      animation: knight-attack 0.8s steps(16) forwards;
+    }
+    .knight-victory {
+      background-position-y: 60%;
+      animation: knight-victory 1s steps(16) forwards;
+    }
+    .knight-death {
+      background-position-y: 86.67%;
+      animation: knight-attack 1.2s steps(16) forwards;
+    }
+
     /* Scroll texture */
     .scroll-texture {
       background:
@@ -483,6 +535,10 @@
         const saved = localStorage.getItem('earnedBadges');
         return saved ? JSON.parse(saved) : [];
       });
+
+      // Knight animation state
+      const [knightAction, setKnightAction] = useState('idle');
+      const knightActionTimeoutRef = useRef(null);
 
       // Save data to Supabase
       const saveToCloud = async (code, data) => {
@@ -1028,6 +1084,10 @@
 
       // Trigger critical hit effect with enhanced animations
       const triggerCriticalHit = (edictKey) => {
+        // Knight attack animation
+        const isHeavy = edictKey === 'training';
+        triggerKnightAttack(isHeavy ? 'heavy-attack' : 'attack');
+
         // Slash animation on the edict
         setSlashedEdict(edictKey);
         setTimeout(() => setSlashedEdict(null), 500);
@@ -1051,6 +1111,8 @@
             const allDone = td.meal1 && td.meal2 && td.meal3 && td.training && (td.water || 0) >= 8;
             if (allDone && !bossDefeated) {
               setBossDefeated(true);
+              // Knight victory animation
+              setKnightAction('victory');
               setTimeout(() => {
                 setShowLoot(true);
                 // Award badge
@@ -1072,6 +1134,43 @@
         { id: 'blood_sigil', name: 'The Blood Sigil', icon: '🩸', desc: 'Defeated Kharos' },
         { id: 'doom_rune', name: 'The Doom Rune', icon: '🔮', desc: 'Defeated Morvain' }
       ];
+
+      // Knight Sprite Component
+      // Sprite sheet: 1758x1638px, 17 cols x 16 rows
+      // Row mapping: 0=idle, 1-2=walk, 3-4=attack, 9-10=heavy, 13=victory
+      const KnightSprite = ({ action = 'idle', size = 120 }) => {
+        const getAnimationClass = () => {
+          switch(action) {
+            case 'walk': return 'knight-walk';
+            case 'attack': return 'knight-attack';
+            case 'heavy-attack': return 'knight-heavy-attack';
+            case 'victory': return 'knight-victory';
+            case 'death': return 'knight-death';
+            default: return 'knight-idle';
+          }
+        };
+
+        return (
+          <div
+            className={`knight-sprite ${getAnimationClass()}`}
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+            }}
+          />
+        );
+      };
+
+      // Trigger knight attack animation
+      const triggerKnightAttack = (attackType = 'attack') => {
+        if (knightActionTimeoutRef.current) {
+          clearTimeout(knightActionTimeoutRef.current);
+        }
+        setKnightAction(attackType);
+        knightActionTimeoutRef.current = setTimeout(() => {
+          setKnightAction('idle');
+        }, attackType === 'heavy-attack' ? 800 : 600);
+      };
 
       // Blood Orb Component (Daily Progress)
       const BloodOrb = ({ percentage }) => (
@@ -1286,6 +1385,17 @@
                   <p className="text-[10px] tracking-[0.2em] mt-1" style={{color: '#4682b4'}}>
                     {isSabbath() ? '☽ SABBATH OF SOULS ☽' : isBossWeek() ? '⚔️ SCOURGE ROOM ⚔️' : '† FORGE THE SPIRE †'}
                   </p>
+                </div>
+
+                {/* Knight Champion */}
+                <div className="flex justify-center py-2">
+                  <div className="relative">
+                    <KnightSprite action={knightAction} size={140} />
+                    {/* Soul fire effect when attacking */}
+                    {knightAction !== 'idle' && (
+                      <div className="absolute inset-0 rounded-full soul-fire opacity-30 pointer-events-none" />
+                    )}
+                  </div>
                 </div>
 
                 {/* Tower and Orbs Container */}
