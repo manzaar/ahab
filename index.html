@@ -1153,8 +1153,9 @@
       // Knight Sprite Component
       // Sprite sheet: 1758x1638px, 17 cols x 16 rows
       // Row mapping: 0=idle, 1-2=walk, 3-4=attack, 9-10=heavy, 13=victory
-      const KnightSprite = ({ action = 'idle', size = 120 }) => {
+      const KnightSprite = ({ action = 'idle', size = 120, active = false }) => {
         const getAnimationClass = () => {
+          if (!active) return ''; // No animation until tower page is opened
           switch(action) {
             case 'walk': return 'knight-walk';
             case 'attack': return 'knight-attack';
@@ -1405,7 +1406,7 @@
                 {/* Knight Champion */}
                 <div className="flex justify-center py-2">
                   <div className="relative">
-                    <KnightSprite action={knightAction} size={140} />
+                    <KnightSprite action={knightAction} size={140} active={currentView === 'tower'} />
                     {/* Soul fire effect when attacking */}
                     {knightAction !== 'idle' && (
                       <div className="absolute inset-0 rounded-full soul-fire opacity-30 pointer-events-none" />
